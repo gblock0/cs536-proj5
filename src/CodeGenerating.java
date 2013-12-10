@@ -100,15 +100,59 @@ public class CodeGenerating extends Visitor {
 	void loadLocalInt(int index){
 		gen("iload", index);
 	}
+	
+	void storeGlobalInt(String name){
+		gen("putstatic", CLASS + "/" + name);
+	}
+	
+	void  storeLocalInt(int index){
+		gen("istore", index);
+	}
+	
+	void binOp(String op){
+		gen(op);
+	}
+	
+	void computeAdr(nameNode name){
+		// Compute address associated w/ name node
+		// don’t load the value addressed onto the stack
+		if (name.subscriptVal.isNull()) {
+			// Simple (unsubscripted) identifier
+			if (name.varName.idinfo.kind == ASTNode.Kinds.Var) {
+				// id is a scalar variable
+				if (name.varName.idinfo.adr == AdrModes.global) {
+					name.adr = AdrModes.global;
+					name.label = name.varName.idinfo.label;
+				} else { // varName.idinfo.adr == local
+					name.adr = AdrModes.local;
+					name.intval = name.varName.idinfo.varIndex;
+				}
+			} else {// Handle arrays later
+			}
+		} else {
+		} // Handle subscripted variables later
+	}
+	
+	void storeName(nameNode name){
+		if (name.subscriptVal.isNull()) {
+			// Simple (unsubscripted) identifier
+			if (name.varName.idinfo.kind == ASTNode.Kinds.Var) {
+			if (name.adr == AdrModes.global)
+			storeGlobalInt(name.label);
+			else // (name.adr == local)
+			storeLocalInt(name.intval);
+			} else{} // Handle arrays later
+			} else{} // Handle subscripted variables later	
+	}
 
 	static Boolean isRelationalOp(int op) {
 		switch (op) {
 			case sym.EQ:
 			case sym.NOTEQ:
-	//		case sym.LT:
-	//		case sym.LEQ:	
-	//		case sym.GT:
-	//		case sym.GEQ:
+			case sym.LT:
+			case sym.LEQ:	
+			case sym.GT:
+			case sym.GEQ:
 				return true;
 			default:
 				return false;
@@ -232,11 +276,15 @@ public class CodeGenerating extends Visitor {
 	
 	void visit(asgNode n) {
 	 // Translate RHS (an expression)
-    	this.visit(n.source);
+//    	this.visit(n.source);
 
     // Value to be stored is now on the stack
     // Save it into target variable, using the variable's index
-    	gen("istore", n.target.varName.idinfo.varIndex);
+//    	gen("istore", n.target.varName.idinfo.varIndex);
+		
+		computeAdr(n.target);
+		this.visit(n.source);
+		storeName(n.target);
 	}
 	
 	void visit(ifThenNode n) { //No else statement in CSX lite
@@ -291,20 +339,23 @@ public class CodeGenerating extends Visitor {
 		 // First translate the left and right operands
     	this.visit(n.leftOperand);
     	this.visit(n.rightOperand);
+    	binOp(selectOpCode(n.operatorCode));
     // Now the values of the operands are on the stack
     // Is this a relational operator?
-    	if (isRelationalOp(n.operatorCode)){
-    		String trueLab = genLab();
-    		String skip = genLab();
-    		gen("if_icmp" + relationCode(n.operatorCode), trueLab);
-    		loadI(0);
-    		branch(skip);
-			defineLab(trueLab);
-			loadI(1);
-			defineLab(skip);
-    	}else{
-    		gen(selectOpCode(n.operatorCode));
-    	}
+//    	if (isRelationalOp(n.operatorCode)){
+//    		String trueLab = genLab();
+//    		String skip = genLab();
+//    		gen("if_icmp" + relationCode(n.operatorCode), trueLab);
+//    		loadI(0);
+//    		branch(skip);
+//			defineLab(trueLab);
+//			loadI(1);
+//			defineLab(skip);
+//    	}else{
+//    		gen(selectOpCode(n.operatorCode));
+//    	}
+    	
+    	n.adr = AdrModes.stack;
 	}
 	
 	
