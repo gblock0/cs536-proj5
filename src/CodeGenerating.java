@@ -26,6 +26,14 @@ public class CodeGenerating extends Visitor {
 	CodeGenerating(PrintStream f){
 		afile=f;
 	}
+	
+    public enum AdrModes { 
+            global,
+            local,
+            stack,
+            literal,
+            none
+    }
 
 	static void assertCondition(boolean assertion){
 		if (! assertion)
@@ -83,6 +91,14 @@ public class CodeGenerating extends Visitor {
 	
 	void loadI(int val){
 		gen("ldc",val);
+	}
+	
+	void loadGlobalInt(String name){
+		gen("genstatic", CLASS + "/" + name + " I");
+	}
+	
+	void loadLocalInt(int index){
+		gen("iload", index);
 	}
 
 	static Boolean isRelationalOp(int op) {
@@ -303,6 +319,7 @@ public class CodeGenerating extends Visitor {
 	
 	void visit(intLitNode n) {
 		loadI(n.intval);
+		n.adr = AdrModes.literal;
 	}
 	
 	void visit(nameNode n) {
@@ -310,6 +327,23 @@ public class CodeGenerating extends Visitor {
 		
 		 // Load value of this variable onto stack using its index
    		gen("iload",n.varName.idinfo.varIndex);
+   		
+		if (n.subscriptVal.isNull()) {
+			// Simple (unsubscripted) identifier
+			if (n.varName.idinfo.kind == ASTNode.Kinds.Var
+					|| n.varName.idinfo.kind == ASTNode.Kinds.Value) {
+				// id is a scalar variable or const
+				if (n.varName.idinfo.adr == AdrModes.global) {
+					// id is a global
+					String label = n.varName.idinfo.label;
+					loadGlobalInt(label);
+				} else { // (n.varName.idinfo.adr == Local)
+					n.intval = n.varName.idinfo.varIndex;
+			   		loadLocalInt(n.intval);
+		   		} 
+			} else // Handle arrays later
+		   		n.adr = AdrModes.stack;
+	   	} else {} // Handle subscripted variables later
 	}
 
 	
@@ -322,13 +356,13 @@ public class CodeGenerating extends Visitor {
 		
 		this.visit(n.members.fields);
 		
-		gen(".method", "public static main([Ljava/lang/String;)V");
+		gen(".method", "public static", "main([Ljava/lang/String;)V");
 		
 		this.visit(n.members.fields);
 		
-		gen("invokestatic", "CLASS/main()V");
+		gen("invokestatic", CLASS + "/main()V");
 		gen("return");
-		gen(".limit", "stack", "2");
+		gen(".limit", "stack", 2);
 		gen(".end", "method");
 		
 		this.visit(n.members.methods);
@@ -373,12 +407,16 @@ public class CodeGenerating extends Visitor {
 	}
 
 	void visit(trueNode n) {
-		// TODO Auto-generated method stub
-
+		loadI(1);
+		n.adr = AdrModes.literal;
+		n.intval = 1;
 	}
 
 	void visit(falseNode n) {
-		// TODO Auto-generated method stub
+		loadI(0);
+		n.adr = AdrModes.literal;
+		n.intval = 0;
+		
 
 	}
 
@@ -412,8 +450,9 @@ public class CodeGenerating extends Visitor {
 
 
 	void visit(charLitNode n) {
-		// TODO Auto-generated method stub
-
+		loadI(n.charval);
+		n.adr = AdrModes.literal;
+		n.intval = n.charval;
 	}
 
 	void visit(strLitNode n) {
@@ -422,8 +461,8 @@ public class CodeGenerating extends Visitor {
 	}
 
 	void visit(argsNode n) {
-		// TODO Auto-generated method stub
-
+		this.visit(n.argVal);
+		this.visit(n.moreArgs);
 	}
 
 

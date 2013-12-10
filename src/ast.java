@@ -688,12 +688,18 @@ abstract class exprNodeOption extends ASTNode {
 abstract class exprNode extends exprNodeOption {
 	 protected Types   type; // Used for typechecking: the type of this node
      protected Kinds   kind; // Used for typechecking: the kind of this node
+     protected CodeGenerating.AdrModes adr;
+     protected int intval;
+     protected String label;
 
 	exprNode(){super();};
 	exprNode(int l,int c){
                 super(l,c);
 		type=Types.Error;
 		kind=Kinds.Other;
+		adr = CodeGenerating.AdrModes.none;
+		intval = 0;
+		label = null;
         };
         
 	exprNode(int l,int c,Types t,Kinds k) {
