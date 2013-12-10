@@ -19,6 +19,10 @@ public class CodeGenerating extends Visitor {
 
 	int labelCnt = 0;	// counter used to generate unique labels
 	
+	methodDeclNode currentMethod;
+	
+	String CLASS;
+	
 	CodeGenerating(PrintStream f){
 		afile=f;
 	}
@@ -101,10 +105,13 @@ public class CodeGenerating extends Visitor {
 			case sym.NOTEQ:
 				return "ne";
 			case sym.LT:
-				return "";
+				return "lt";
 			case sym.LEQ:	
+				return "le";
 			case sym.GT:
+				return "gt";
 			case sym.GEQ:
+				return "ge";
 			default:
 				return "";
 		}
@@ -307,7 +314,24 @@ public class CodeGenerating extends Visitor {
 
 	
 	void visit(classNode n) {
-		// TODO Auto-generated method stub
+		currentMethod = null;
+		CLASS = n.className.idname;
+		
+		gen(".class", "public", CLASS);
+		gen(".super", "java/lang/object");
+		
+		this.visit(n.members.fields);
+		
+		gen(".method", "public static main([Ljava/lang/String;)V");
+		
+		this.visit(n.members.fields);
+		
+		gen("invokestatic", "CLASS/main()V");
+		gen("return");
+		gen(".limit", "stack", "2");
+		gen(".end", "method");
+		
+		this.visit(n.members.methods);
 
 	}
 
