@@ -355,33 +355,32 @@ public class CodeGenerating extends Visitor {
 	
 	void visit(nullStmtsNode n){}
 
-	void visit(varDeclNode n){
-			//   Give this variable an index equal to numberOfLocals (initially 0)
-			//     and remember index in symbol table entry
+	void visit(varDeclNode n) {
+		// Give this variable an index equal to numberOfLocals (initially 0)
+		// and remember index in symbol table entry
 
-			//n.varName.idinfo.varIndex = numberOfLocals;
-	        
-	        //   Increment numberOfLocals used in this prog
-	        
-			//numberOfLocals++;
-	        
-	        if (currentMethod == null){ // A global field decl 
-	        	 if (n.varName.idinfo.adr == AdrModes.none) {
-		        	 // First pass; generate field declarations 
-		        	 declField(n); 
-				}else { // 2nd pass; do field initialization (if needed) 
-		        	 if (! n.initValue.isNull()) {
-			        	 if (! isNumericLit(n.initValue)) { 
-				        	 // Compute init val onto stack; store in field 
-				        	 this.visit(n.initValue); 
-				        	 storeId(n.varName); 
-			        	 } 
-		        	 } else {
-		        		 // Handle local variable declarations later 
-		        		 n.varName.idinfo.adr = AdrModes.local;
-		        		 
-		        	 }
+		// n.varName.idinfo.varIndex = numberOfLocals;
 
+		// Increment numberOfLocals used in this prog
+
+		// numberOfLocals++;
+
+		if (currentMethod == null) { // A global field decl
+			if (n.varName.idinfo.adr == AdrModes.none) {
+				// First pass; generate field declarations
+				declField(n);
+			} else { // 2nd pass; do field initialization (if needed)
+				if (!n.initValue.isNull()) {
+					if (!isNumericLit(n.initValue)) {
+						// Compute init val onto stack; store in field
+						this.visit(n.initValue);
+						storeId(n.varName);
+					}
+				} else {
+					//Handle local variable declarations later
+				}
+			}
+		}
 	}
 	
 	void visit(nullTypeNode n) {}
@@ -600,12 +599,41 @@ public class CodeGenerating extends Visitor {
 	}
 
 	void visit(constDeclNode n) {
-		// TODO Auto-generated method stub
+		if (currentMethod == null) { // A global const decl
+			if (n.constName.idinfo.adr == AdrModes.none) {
+				// First pass; generate field declarations
+				declField(n);
+			} else { // 2nd pass; do field initialization (if needed)
+				if (!isNumericLit(n.constValue)) {
+					// Compute const val onto stack and store in field
+					this.visit(n.constValue);
+					storeId(n.constName);
+				}
+			}
+		} else {// Handle local const declarations later}
 
+		}
 	}
 
 	void visit(arrayDeclNode n) {
-		// TODO Auto-generated method stub
+		if (currentMethod == null) {
+			// A global array decl 
+			 if (n.arrayName.idinfo.adr == AdrModes.none) { 
+				 // First pass; generate field declarations 
+				 declField(n); 
+				 return;
+			 }
+		} else {
+			// Handle local array declaration later
+		}
+			 
+		 // Now create the array & store a reference to it 
+		 loadI(n.arraySize.intval); //Push number of array elements 
+		 allocateArray(n.elementType); 
+		 if (n.arrayName.idinfo.adr == AdrModes.global) 
+		 storeGlobalReference(n.arrayName.idinfo.label, 
+		 arrayTypeCode(n.elementType)); 
+		 else storeLocalReference(n.arrayName.idinfo.varIndex); 
 
 	}
 

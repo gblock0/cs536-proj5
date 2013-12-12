@@ -18,8 +18,9 @@ class SymbolInfo extends Symb {
  int arraySize; 
  
  public CodeGenerating.AdrModes adr;
- String label;
- int varIndex;
+ public String label;
+ public int varIndex;
+ public int numberOfLocals;
 
  public SymbolInfo(String id, ASTNode.Kinds k, ASTNode.Types t){    
 	super(id);
@@ -30,6 +31,7 @@ class SymbolInfo extends Symb {
 	adr = CodeGenerating.AdrModes.none;
 	label = null;
 	varIndex = 0;
+	numberOfLocals = 0;
 	};
 	
  public String toString(){
