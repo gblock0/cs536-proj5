@@ -133,6 +133,17 @@ public class CodeGenerating extends Visitor {
 		} // Handle subscripted variables later
 	}
 	
+	
+	void storeId(identNode id){
+		if(id.idinfo.kind == ASTNode.Kinds.Var || id.idinfo.kind == ASTNode.Kinds.Value){
+			if(id.idinfo.adr == AdrModes.global){
+				storeGlobalInt(id.idinfo.label);
+			}else{
+				storeLocalInt(id.idinfo.varIndex);
+			}
+		}
+	}
+
 	void storeName(nameNode name){
 		if (name.subscriptVal.isNull()) {
 			// Simple (unsubscripted) identifier
@@ -144,7 +155,106 @@ public class CodeGenerating extends Visitor {
 			} else{} // Handle arrays later
 			} else{} // Handle subscripted variables later	
 	}
+	
+	boolean isNumericLit(exprNodeOption e){
+			 return (e instanceof intLitNode) || 
+			 (e instanceof charLitNode) || 
+			 (e instanceof trueNode) || 
+			 (e instanceof falseNode);
+	}
+	
+	int getLitValue(exprNode e){ 
+		 if (e instanceof intLitNode) 
+			 return e.intval; 
+		 else if (e instanceof charLitNode) 
+			 return ((charLitNode) e).charval; 
+		 else if (e instanceof trueNode) 
+			 return 1; 
+		 else 
+			 return 0; 
+	 }
+	
+	void declGlobalInt(String name, exprNodeOption initValue) {
+		if (isNumericLit(initValue)) {
+			int numValue = getLitValue((exprNode) initValue);
+			// Generate a field declaration with initial value:
+			gen(".field", "public static", name + " I = " + numValue);
+		} else {
+			// Gen a field declaration without an initial value:
+			gen(".field", "public static", name + " I");
+		}
+	}
+	
+	String arrayTypeCode(typeNode type){ 
+		 // Return array type code 
+		 if (type instanceof intTypeNode) 
+		 return "[I"; 
+		 else if (type instanceof charTypeNode) 
+		 return "[C"; 
+		 else // (type instanceof boolTypeNode) 
+		 return "[Z"; 
+	}
+	
+	void declGlobalArray(String name, typeNode type) {
+		// Generate a field declaration for an array:
+		// .field public static name arrayTypeCode(type)
+		gen(".field", "public static", name + arrayTypeCode(type));
+	}
+	
+	void allocateArray(typeNode type) {
+		if (type instanceof intTypeNode) {
+			// Generate a newarray instruction for an integer array:
+			// newarray int
+			gen("newarray", "int");
+		} else if (type instanceof charTypeNode) {
 
+			// Gen a newarray instruction for a character array:
+			// newarray char
+			gen("newarray", "char");
+		} else {// (type instanceof boolTypeNode) {
+			// Gen a newarray instruction for a boolean array:
+			// newarray boolean
+			gen("newarray", "boolean");
+		}
+	}
+	
+	void storeGlobalReference(String name, String typeCode){ 
+		 // Generate a store of a reference from the stack into 
+		 // a static field: 
+		 // putstatic CLASS/name typeCode 
+		gen("putstatic", CLASS + "/" + name, typeCode);
+	} 
+	
+	void storeLocalReference(int index) {
+		// Generate a store of a reference from the stack into
+		// a local variable:
+		// astore index
+		gen("astore", index);
+	}
+	
+	void declField(varDeclNode n){ 
+		 String varLabel = n.varName.idname +"$"; 
+		 declGlobalInt(varLabel,n.initValue); 
+		 n.varName.idinfo.label = varLabel; 
+		 n.varName.idinfo.adr = AdrModes.global; 
+	} 
+	
+	void declField(constDeclNode n){ 
+		 String constLabel = n.constName.idname +"$"; 
+		 declGlobalInt(constLabel,n.constValue); 
+		 n.constName.idinfo.label = constLabel; 
+		 n.constName.idinfo.adr = AdrModes.global; 
+	} 
+	
+	void  declField(arrayDeclNode n){ 
+		 String arrayLabel = n.arrayName.idname +"$"; 
+		 declGlobalArray(arrayLabel,n.elementType); 
+		 n.arrayName.idinfo.label = arrayLabel; 
+		 n.arrayName.idinfo.adr = AdrModes.global; 
+		} 
+
+
+	
 	static Boolean isRelationalOp(int op) {
 		switch (op) {
 			case sym.EQ:
@@ -249,11 +359,29 @@ public class CodeGenerating extends Visitor {
 			//   Give this variable an index equal to numberOfLocals (initially 0)
 			//     and remember index in symbol table entry
 
-	        n.varName.idinfo.varIndex = numberOfLocals;
+			//n.varName.idinfo.varIndex = numberOfLocals;
 	        
 	        //   Increment numberOfLocals used in this prog
 	        
-	        numberOfLocals++;
+			//numberOfLocals++;
+	        
+	        if (currentMethod == null){ // A global field decl 
+	        	 if (n.varName.idinfo.adr == AdrModes.none) {
+		        	 // First pass; generate field declarations 
+		        	 declField(n); 
+				}else { // 2nd pass; do field initialization (if needed) 
+		        	 if (! n.initValue.isNull()) {
+			        	 if (! isNumericLit(n.initValue)) { 
+				        	 // Compute init val onto stack; store in field 
+				        	 this.visit(n.initValue); 
+				        	 storeId(n.varName); 
+			        	 } 
+		        	 } else {
+		        		 // Handle local variable declarations later 
+		        		 n.varName.idinfo.adr = AdrModes.local;
+		        		 
+		        	 }
+
 	}
 	
 	void visit(nullTypeNode n) {}
