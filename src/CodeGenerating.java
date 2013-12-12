@@ -89,6 +89,10 @@ public class CodeGenerating extends Visitor {
 		gen("goto",label);
 	}
 	
+	void branchZ(String label){
+		gen("ifeq",label);
+	}
+	
 	void loadI(int val){
 		gen("ldc",val);
 	}
@@ -450,12 +454,15 @@ public class CodeGenerating extends Visitor {
     	else if(n.outputValue.kind == ASTNode.Kinds.String){
 	    	gen("invokestatic"," CSXLib/printString(LJava/lang/String;)V");
     	}
-    	else if(n.outputValue.kind == ASTNode.Kinds.Array || n.outputValue.kind == ASTNode.Kinds.ArrayParm){
+    	else if(n.outputValue.kind == ASTNode.Kinds.Array || n.outputValue.kind
+    			== ASTNode.Kinds.ArrayParm){
 	    	gen("invokestatic"," CSXLib/printCharArray([C)V");
     	}
     	this.visit(n.morePrints);
 	}
 
+	
+	
 	void visit(nullPrintNode n) {}
 		
 	void visit(blockNode n) {
@@ -525,6 +532,15 @@ public class CodeGenerating extends Visitor {
 	   	} else {} // Handle subscripted variables later
 	}
 
+    void loadGlobalReference(String name, String typeCode){
+        // Generate a load of a reference to the stack from a static field:
+        gen("getstatic", CLASS + "/"+name,typeCode);
+}
+    void loadLocalReference(int index){
+        // Generates a load of a reference to the stack 
+    	// from a local variable
+        gen("aload", index);
+}
 	
 	void visit(classNode n) {
 		currentMethod = null;
@@ -635,8 +651,7 @@ public class CodeGenerating extends Visitor {
 	}
 
 	void visit(strLitNode n) {
-		// TODO Auto-generated method stub
-
+		 gen("ldc", n.strval);
 	}
 
 	void visit(argsNode n) {
@@ -661,7 +676,18 @@ public class CodeGenerating extends Visitor {
 
 	
 	void visit(whileNode n) {
-		// TODO Auto-generated method stub
+		String top = genLab();
+		String bottom = genLab();
+		if (! n.label.isNull()){
+		((identNode) n.label).idinfo.topLabel = top;
+		((identNode) n.label).idinfo.bottomLabel = bottom;
+		}
+		defineLab(top);
+		this.visit(n.condition);
+		branchZ(bottom);
+		this.visit(n.loopBody);
+		branch(top);
+		defineLab(bottom);
 
 	}
 
