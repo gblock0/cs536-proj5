@@ -21,6 +21,8 @@ class SymbolInfo extends Symb {
  public String label;
  public int varIndex;
  public int numberOfLocals;
+ public String bottomLabel;
+ public String topLabel;
 
  public SymbolInfo(String id, ASTNode.Kinds k, ASTNode.Types t){    
 	super(id);
@@ -32,6 +34,9 @@ class SymbolInfo extends Symb {
 	label = null;
 	varIndex = 0;
 	numberOfLocals = 0;
+	bottomLabel = null;
+	topLabel = null;
+	
 	};
 	
  public String toString(){
