@@ -114,26 +114,6 @@ public class CodeGenerating extends Visitor {
 		gen(op);
 	}
 
-	void computeAdr(nameNode name) {
-		// Compute address associated w/ name node
-		// don’t load the value addressed onto the stack
-		if (name.subscriptVal.isNull()) {
-			// Simple (unsubscripted) identifier
-			if (name.varName.idinfo.kind == ASTNode.Kinds.Var) {
-				// id is a scalar variable
-				if (name.varName.idinfo.adr == AdrModes.global) {
-					name.adr = AdrModes.global;
-					name.label = name.varName.idinfo.label;
-				} else { // varName.idinfo.adr == local
-					name.adr = AdrModes.local;
-					name.intval = name.varName.idinfo.varIndex;
-				}
-			} else {// Handle arrays later
-			}
-		} else {
-		} // Handle subscripted variables later
-	}
-
 	void storeId(identNode id) {
 		if (id.idinfo.kind == ASTNode.Kinds.Var
 				|| id.idinfo.kind == ASTNode.Kinds.Value) {
@@ -143,21 +123,6 @@ public class CodeGenerating extends Visitor {
 				storeLocalInt(id.idinfo.varIndex);
 			}
 		}
-	}
-
-	void storeName(nameNode name) {
-		if (name.subscriptVal.isNull()) {
-			// Simple (unsubscripted) identifier
-			if (name.varName.idinfo.kind == ASTNode.Kinds.Var) {
-				if (name.adr == AdrModes.global)
-					storeGlobalInt(name.label);
-				else
-					// (name.adr == local)
-					storeLocalInt(name.intval);
-			} else {
-			} // Handle arrays later
-		} else {
-		} // Handle subscripted variables later
 	}
 
 	boolean isNumericLit(exprNodeOption e) {
@@ -461,15 +426,31 @@ public class CodeGenerating extends Visitor {
 	}
 
 	void visit(asgNode n) {
+		// Compute address associated with LHS
+		computeAdr(n.target);
+
 		// Translate RHS (an expression)
-		// this.visit(n.source);
+		this.visit(n.source);
+
+		// Check to see if source needs to be cloned or converted
+		if (n.source.kind == ASTNode.Kinds.Array
+				|| n.source.kind == ASTNode.Kinds.ArrayParm)
+			switch (n.source.type) {
+			case Integer:
+				genCall("CSXLib/cloneIntArray([I)[I");
+				break;
+			case Boolean:
+				genCall("CSXLib/cloneBoolArray([Z)[Z");
+				break;
+			case Character:
+				genCall("CSXLib/cloneCharArray([C)[C");
+				break;
+			}
+		else if (n.source.kind == ASTNode.Kinds.String)
+			genCall("CSXLib/convertString(Ljava/lang/String;)[C");
 
 		// Value to be stored is now on the stack
-		// Save it into target variable, using the variable's index
-		// gen("istore", n.target.varName.idinfo.varIndex);
-
-		computeAdr(n.target);
-		this.visit(n.source);
+		// Store it into LHS
 		storeName(n.target);
 	}
 
@@ -550,10 +531,8 @@ public class CodeGenerating extends Visitor {
 		n.adr = AdrModes.literal;
 	}
 
-	void visit(nameNode n) {
-		// In CSX lite no arrays exist and all variable names are local
-		// variables
-
+	void visit(nameNode n) { // Final version
+		n.adr = AdrModes.stack;
 		if (n.subscriptVal.isNull()) {
 			// Simple (unsubscripted) identifier
 			if (n.varName.idinfo.kind == ASTNode.Kinds.Var
@@ -578,10 +557,122 @@ public class CodeGenerating extends Visitor {
 					loadLocalReference(n.intval);
 				}
 			}
-			n.adr = AdrModes.stack;
-		} else {
-		} // Handle subscripted variables later
 
+		} else { // This is a subscripted variable
+			// Push array reference first
+			if (n.varName.idinfo.adr == AdrModes.global) {
+				n.label = n.varName.idinfo.label;
+				loadGlobalReference(n.label,
+						arrayTypeCode(n.varName.idinfo.type));
+			} else { // (n.varName.idinfo.adr == local)
+				n.intval = n.varName.idinfo.varIndex;
+				loadLocalReference(n.intval);
+			} // Next compute subscript expression
+			this.visit(n.subscriptVal);
+			// Now load the array element onto the stack
+			switch (n.type) {
+			case Integer:
+				gen("iqload");// Generate: iaload
+				break;
+			case Boolean:
+				gen("bqload");// Generate: baload
+				break;
+			case Character:
+				gen("caload");// Generate: caload
+				break;
+			}
+		}
+	}
+
+	// Compute address associated w/ name node
+	// DON'T load the value addressed onto the stack
+	void computeAdr(nameNode name) { // Final version
+		if (name.subscriptVal.isNull()) {
+			// Simple (unsubscripted) identifier
+			if (name.varName.idinfo.kind == ASTNode.Kinds.Var
+					|| name.varName.idinfo.kind == ASTNode.Kinds.ScalarParm) {
+				// id is a scalar variable
+				if (name.varName.idinfo.adr == AdrModes.global) {
+					name.adr = AdrModes.global;
+					name.label = name.varName.idinfo.label;
+				} else { // varName.idinfo.adr == Local
+					name.adr = AdrModes.local;
+					name.intval = name.varName.idinfo.varIndex;
+				}
+			} else { // Must be an array
+				// Push ref to target array to check length
+				if (name.varName.idinfo.adr == AdrModes.global) {
+					name.label = name.varName.idinfo.label;
+					loadGlobalReference(name.label,
+							arrayTypeCode(name.varName.idinfo.type));
+				} else { // (name.varName.idinfo.adr == local)
+					name.intval = name.varName.idinfo.varIndex;
+					loadLocalReference(name.intval);
+				}
+			}
+		} else { // This is subscripted variable
+			// Push array reference first
+			if (name.varName.idinfo.adr == AdrModes.global) {
+				name.label = name.varName.idinfo.label;
+				loadGlobalReference(name.label,
+						arrayTypeCode(name.varName.idinfo.type));
+			} else { // (name.varName.idinfo.adr == local)
+				name.intval = name.varName.idinfo.varIndex;
+				loadLocalReference(name.intval);
+			} // Next compute subscript expression
+			this.visit(name.subscriptVal);
+		}
+	}
+
+	void storeName(nameNode name) { // Final version
+		if (name.subscriptVal.isNull()) {
+			// Simple (unsubscripted) identifier
+			if (name.varName.idinfo.kind == ASTNode.Kinds.Var
+					|| name.varName.idinfo.kind == ASTNode.Kinds.ScalarParm) {
+				if (name.adr == AdrModes.global)
+					storeGlobalInt(name.label);
+				else
+					// (name.adr == Local)
+					storeLocalInt(name.intval);
+			} else {// Must be an array
+				// Check the lengths of source & target arrays
+				switch (name.type) {
+				case Integer:
+					genCall("CSXLib/checkIntArrayLength([I[I)[I");
+					break;
+				case Boolean:
+					genCall("CSXLib/checkBoolArrayLength([Z[Z)[Z");
+					break;
+				case Character:
+					genCall("CSXLib/checkCharArrayLength([C[C)[C");
+					break;
+				} // Now store source array in target variable
+				if (name.varName.idinfo.adr == AdrModes.global) {
+					name.label = name.varName.idinfo.label;
+					storeGlobalReference(name.label,
+							arrayTypeCode(name.varName.idinfo.type));
+				} else { // (name.varName.idinfo.adr == local)
+					name.intval = name.varName.idinfo.varIndex;
+					storeLocalReference(name.intval);
+				}
+			}
+		} else
+			// This is a subscripted variable
+			// A reference to the target array, the
+			// subscript expression and the source expression
+			// have already been pushed.
+			// Now store the source value into the array
+			switch (name.type) {
+			case Integer:
+				gen("iastore");// Generate: iastore
+				break;
+			case Boolean:
+				gen("bastore"); // Generate: bastore
+				break;
+			case Character:
+				gen("castore"); // Generate: castore
+				break;
+			}
 	}
 
 	void visit(classNode n) {
@@ -795,7 +886,33 @@ public class CodeGenerating extends Visitor {
 	}
 
 	void visit(incrementNode n) {
-		// TODO Auto-generated method stub
+		if (n.target.subscriptVal.isNull()) {
+			// Simple (unsubscripted) identifier
+			this.visit(n.target); // Evaluate ident onto stack
+			loadI(1);
+			gen("iadd"); // incremented ident now on stack
+			computeAdr(n.target);
+			storeName(n.target);
+		} else { // Subscripted array element
+			computeAdr(n.target); // Push array ref and index
+			gen("dup2"); // Duplicate array ref and index
+			// (one pair for load, 2nd pair for store)
+			// Now load the array element onto the stack
+			switch (n.target.type) {
+			case Integer:
+				gen("iaload");
+				break;
+			case Boolean:
+				gen("baload");
+				break;
+			case Character:
+				gen("caload");
+				break;
+			}
+			loadI(1);
+			gen("iadd"); // incremented identifier now on stack
+			storeName(n.target);
+		}
 	}
 
 	void visit(decrementNode n) {
