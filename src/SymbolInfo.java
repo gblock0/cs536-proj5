@@ -23,6 +23,7 @@ class SymbolInfo extends Symb {
  public int numberOfLocals;
  public String bottomLabel;
  public String topLabel;
+ public String methodReturnCode;
 
  public SymbolInfo(String id, ASTNode.Kinds k, ASTNode.Types t){    
 	super(id);
@@ -36,6 +37,7 @@ class SymbolInfo extends Symb {
 	numberOfLocals = 0;
 	bottomLabel = null;
 	topLabel = null;
+	methodReturnCode = null;
 	
 	};
 	

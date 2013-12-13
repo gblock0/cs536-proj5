@@ -152,6 +152,35 @@ public class CodeGenerating extends Visitor {
 		}
 	}
 
+	String typeCode(typeNode type) {
+		// Return type code
+		if (type instanceof intTypeNode)
+			return "I";
+		else if (type instanceof charTypeNode)
+			return "C";
+		else if (type instanceof boolTypeNode)
+			return "Z";
+		else
+			// (type instanceof voidTypeNode)
+			return "V";
+	}
+
+	String typeCode(ASTNode.Types type) {
+		// Return type code
+		switch (type) {
+		case Integer:
+			return "I";
+		case Character:
+			return "C";
+		case Boolean:
+			return "Z";
+		case Void:
+			return "V";
+		default:
+			return "Not a valid type";
+		}
+	}
+
 	String arrayTypeCode(typeNode type) {
 		// Return array type code
 		if (type instanceof intTypeNode)
@@ -275,6 +304,58 @@ public class CodeGenerating extends Visitor {
 		gen("invokestatic", methodDescriptor);
 	}
 
+	String buildTypeCode(argDeclNode n) {
+		if (n instanceof valArgDeclNode)
+			return typeCode(((valArgDeclNode) n).argType);
+		else
+			// must be an arrayArgDeclNode
+			return arrayTypeCode(((arrayArgDeclNode) n).elementType);
+	}
+
+	String buildTypeCode(argDeclsNode n) {
+		if (n.moreDecls.isNull())
+			return buildTypeCode(n.thisDecl);
+		else
+			return buildTypeCode(n.thisDecl)
+					+ buildTypeCode((argDeclsNode) n.moreDecls);
+	}
+
+	boolean isArray(exprNode n) {
+		if (n.kind == ASTNode.Kinds.Array || n.kind == ASTNode.Kinds.ArrayParm) {
+			return true;
+		} else {
+			return false;
+		}
+
+	}
+
+	String buildTypeCode(exprNode n) {
+		if (isArray(n))
+			return arrayTypeCode(n.type);
+		else
+			return typeCode(n.type);
+	}
+
+	String buildTypeCode(argsNode n) {
+		if (n.moreArgs.isNull())
+			return buildTypeCode(n.argVal);
+		else
+			return buildTypeCode(n.argVal)
+					+ buildTypeCode((argsNode) n.moreArgs);
+
+	}
+
+	String buildTypeCode(String methodName, argsNodeOption args,
+			String returnCode) {
+		String newTypeCode = methodName;
+		if (args.isNull())
+			newTypeCode = newTypeCode + "()";
+		else
+			newTypeCode = newTypeCode + "(" + buildTypeCode((argsNode) args)
+					+ ")";
+		return newTypeCode + returnCode;
+	}
+
 	static Boolean isRelationalOp(int op) {
 		switch (op) {
 		case sym.EQ:
@@ -379,29 +460,29 @@ public class CodeGenerating extends Visitor {
 	}
 
 	void visit(varDeclNode n) {
-		// Give this variable an index equal to numberOfLocals (initially 0)
-		// and remember index in symbol table entry
-
-		// n.varName.idinfo.varIndex = numberOfLocals;
-
-		// Increment numberOfLocals used in this prog
-
-		// numberOfLocals++;
-
-		if (currentMethod == null) { // A global field decl
-			if (n.varName.idinfo.adr == AdrModes.none) {
+		if (currentMethod == null) // A global field decl
+			if (n.varName.idinfo.adr == AdrModes.none)
 				// First pass; generate field declarations
 				declField(n);
-			} else { // 2nd pass; do field initialization (if needed)
-				if (!n.initValue.isNull()) {
+			else { // 2nd pass; do field init (if needed)
+				if (!n.initValue.isNull())
 					if (!isNumericLit(n.initValue)) {
-						// Compute init val onto stack; store in field
+						// Compute init value & store in field
 						this.visit(n.initValue);
 						storeId(n.varName);
 					}
-				} else {
-					// Handle local variable declarations later
-				}
+			}
+		else {// Process local variable declaration
+				// Give this var an index equal to numberOfLocals
+				// and remember index in symbol table entry
+			n.varName.idinfo.varIndex = currentMethod.name.idinfo.numberOfLocals;
+			n.varName.idinfo.adr = AdrModes.local;
+			// Increment numberOfLocals used in this method
+			currentMethod.name.idinfo.numberOfLocals++;
+			// Do initialization (if necessary)
+			if (!n.initValue.isNull()) {
+				this.visit(n.initValue);
+				storeId(n.varName);
 			}
 		}
 	}
@@ -703,18 +784,22 @@ public class CodeGenerating extends Visitor {
 	}
 
 	void visit(valArgDeclNode n) {
-		// TODO Auto-generated method stub
+		// Label method argument with its address info
+		n.argName.idinfo.adr = AdrModes.local;
+		n.argName.idinfo.varIndex = currentMethod.name.idinfo.numberOfLocals++;
 
 	}
 
 	void visit(arrayArgDeclNode n) {
-		// TODO Auto-generated method stub
-
+		// Label method argument with its address info
+		n.argName.idinfo.adr = AdrModes.local;
+		n.argName.idinfo.varIndex = currentMethod.name.idinfo.numberOfLocals++;
 	}
 
 	void visit(argDeclsNode n) {
-		// TODO Auto-generated method stub
-
+		// Label each method argument with its address info
+		this.visit(n.thisDecl);
+		this.visit(n.moreDecls);
 	}
 
 	void visit(nullArgDeclsNode n) {
@@ -729,7 +814,42 @@ public class CodeGenerating extends Visitor {
 	}
 
 	void visit(methodDeclNode n) {
-		// TODO Auto-generated method stub
+		currentMethod = n; // We’re in a method now!
+		n.name.idinfo.numberOfLocals = 0;
+		String newTypeCode = n.name.idname;
+		if (n.args.isNull()) {
+			newTypeCode = newTypeCode + "()";
+		} else {
+			newTypeCode = newTypeCode + "("
+					+ buildTypeCode((argDeclsNode) n.args) + ")";
+		}
+
+		newTypeCode = newTypeCode + typeCode(n.returnType);
+		n.name.idinfo.methodReturnCode = typeCode(n.returnType);
+		// generate:
+		// .method public static newTypeCode
+		gen(".method", "public static", newTypeCode);
+		this.visit(n.args); // Assign local variable indices to args
+		// Generate code for local decls and method body
+		this.visit(n.decls);
+		this.visit(n.stmts);
+		// generate default return at end of method body
+		if (n.returnType instanceof voidTypeNode) {
+			gen("return"); // generate: return
+		} else { // Push a default return value of 0
+			loadI(0);
+			// generate: ireturn
+			gen("ireturn");
+		}
+		// Generate end of method data;
+		// we’ll guestimate stack depth needed at 25
+		// (almost certainly way too big!)
+		// generate: .limit stack 25
+		// generate: .limit locals n.name.idinfo.numberOfLocals
+		// generate: .end method
+		gen(".limit", "stack", 25);
+		gen(".limit", "locals", n.name.idinfo.numberOfLocals);
+		gen(".end", "method");
 
 	}
 
@@ -747,43 +867,56 @@ public class CodeGenerating extends Visitor {
 	}
 
 	void visit(constDeclNode n) {
-		if (currentMethod == null) { // A global const decl
-			if (n.constName.idinfo.adr == AdrModes.none) {
+		if (currentMethod == null) // A global const decl
+			if (n.constName.idinfo.adr == AdrModes.none)
 				// First pass; generate field declarations
 				declField(n);
-			} else { // 2nd pass; do field initialization (if needed)
+			else {// 2nd pass; do field initialization (if needed)
 				if (!isNumericLit(n.constValue)) {
-					// Compute const val onto stack and store in field
+					// Compute init value & store in field
 					this.visit(n.constValue);
 					storeId(n.constName);
 				}
 			}
-		} else {// Handle local const declarations later}
-
+		else {// Process local const declaration
+				// Give this variable an index equal to numberOfLocals
+				// and remember index in symbol table entry
+			n.constName.idinfo.varIndex = currentMethod.name.idinfo.numberOfLocals;
+			n.constName.idinfo.adr = AdrModes.none;
+			// Increment numberOfLocals used in this method
+			currentMethod.name.idinfo.numberOfLocals++;
+			// compute and store const value
+			this.visit(n.constValue);
+			storeId(n.constName);
 		}
 	}
 
 	void visit(arrayDeclNode n) {
-		if (currentMethod == null) {
-			// A global array decl
+		// Create a new array and store resulting reference
+		if (currentMethod == null) { // A global array decl
 			if (n.arrayName.idinfo.adr == AdrModes.none) {
 				// First pass; generate field declarations
 				declField(n);
 				return;
 			}
 		} else {
-			// Handle local array declaration later
+			// Process local array declaration
+			// Give this variable an index equal to numberOfLocals
+			// and remember index in symbol table entry
+			n.arrayName.idinfo.varIndex = currentMethod.name.idinfo.numberOfLocals;
+			n.arrayName.idinfo.adr = AdrModes.local;
+			// Increment numberOfLocals used in this method
+			currentMethod.name.idinfo.numberOfLocals++;
 		}
 
 		// Now create the array & store a reference to it
-		loadI(n.arraySize.intval); // Push number of array elements
+		loadI(n.arraySize.intval); // Push size of array
 		allocateArray(n.elementType);
 		if (n.arrayName.idinfo.adr == AdrModes.global)
 			storeGlobalReference(n.arrayName.idinfo.label,
 					arrayTypeCode(n.elementType));
 		else
 			storeLocalReference(n.arrayName.idinfo.varIndex);
-
 	}
 
 	void visit(readNode n) {
@@ -849,8 +982,12 @@ public class CodeGenerating extends Visitor {
 	}
 
 	void visit(callNode n) {
-		// TODO Auto-generated method stub
-
+		// Evaluate args and push them onto the stack
+		this.visit(n.args);
+		// Generate call to method, using its type code
+		String typeCode = buildTypeCode(n.methodName.idname, n.args,
+				n.methodName.idinfo.methodReturnCode);
+		genCall(CLASS + "/" + typeCode);
 	}
 
 	void visit(fctCallNode n) {
@@ -859,8 +996,14 @@ public class CodeGenerating extends Visitor {
 	}
 
 	void visit(returnNode n) {
-		// TODO Auto-generated method stub
-
+		if (n.returnVal.isNull()) {
+			// generate: return
+			gen("return");
+		} else { // Evaluate return value
+			this.visit(n.returnVal);
+			// generate: ireturn
+			gen("ireturn");
+		}
 	}
 
 	void visit(breakNode n) {
