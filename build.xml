@@ -97,6 +97,29 @@
 			   </java>
 	</target>
 	
+	<target name ="testTotal" depends="compile">
+	    <!--<concat>
+	        <fileset dir="./tests" includes="test-00.csx"/>
+	    </concat>-->
+		<property file="build.properties"/>
+	   <java classpath="bin;." classname="CSX" fork="true" >
+	    <arg value="tests/test-00.csx">
+	    </arg>
+	   </java>
+	    <concat>
+	        <fileset dir="." includes="test.j"/>
+	    </concat>
+	
+	   <java  classpath="jasmin/classes" classname="jasmin.Main" fork="true" > 
+	    <arg value="./${className}.j">
+	    </arg>
+	   </java>
+	    <move file="${className}.class" todir="bin">
+	    </move>
+	   <java  classpath="./bin" classname="${className}" fork="true"  > 
+	   </java>
+	 </target>
+	
  <target name ="checkJLexNeeded" >
    <uptodate property="JLexnotNeeded" targetfile="src/lite.jlex.java" 
       srcfile="lite.jlex" >

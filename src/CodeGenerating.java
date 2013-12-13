@@ -841,6 +841,7 @@ public class CodeGenerating extends Visitor {
 			// generate: ireturn
 			gen("ireturn");
 		}
+		
 		// Generate end of method data;
 		// we will guestimate stack depth needed at 25
 		// (almost certainly way too big!)
