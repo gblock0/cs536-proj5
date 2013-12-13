@@ -17,7 +17,7 @@ public class CodeGenerating extends Visitor {
 
 	int numberOfLocals = 0; // Total number of local CSX-lite vars
 
-	int labelCnt = 0; // counter used to generate unique labels
+	int labelCnt = 1; // counter used to generate unique labels
 
 	methodDeclNode currentMethod;
 
@@ -82,6 +82,12 @@ public class CodeGenerating extends Visitor {
 
 	void branch(String label) {
 		gen("goto", label);
+	}
+
+	void branchZ(String label) {
+		// Generate branch to label if stack top contains 0:
+		// ifeq label
+		gen("ifeq", label);
 	}
 
 	void loadI(int val) {
@@ -192,6 +198,34 @@ public class CodeGenerating extends Visitor {
 			return "[Z";
 	}
 
+	String arrayTypeCode(ASTNode.Types type) {
+		// Return array type code
+		switch (type) {
+		case Integer:
+			return "[I";
+		case Character:
+			return "[C";
+		case Boolean:
+			return "[Z";
+		default:
+			return "Not a valid type";
+		}
+	}
+
+	void loadGlobalReference(String name, String typeCode) {
+		// Generate a load of a reference to the stack from
+		// a static field:
+		// getstatic CLASS/name typeCode
+		gen("getstatic", CLASS + "/" + name + " " + typeCode);
+	}
+
+	void loadLocalReference(int index) {
+		// Generate a load of a reference to the stack from
+		// a local variable:
+		// aload index
+		gen("aload", index);
+	}
+
 	void declGlobalArray(String name, typeNode type) {
 		// Generate a field declaration for an array:
 		// .field public static name arrayTypeCode(type)
@@ -249,26 +283,32 @@ public class CodeGenerating extends Visitor {
 		n.arrayName.idinfo.label = arrayLabel;
 		n.arrayName.idinfo.adr = AdrModes.global;
 	}
-	
-	void branchRelationalCompare(int tokenCode, String label){ 
-		// Generate a conditional branch to label based on tokenCode: 
-		// Generate: 
-		// "if_icmp"+relationCode(tokenCode) label 
-		//maybe?
+
+	void branchRelationalCompare(int tokenCode, String label) {
+		// Generate a conditional branch to label based on tokenCode:
+		// Generate:
+		// "if_icmp"+relationCode(tokenCode) label
+		// maybe?
 		gen("if_icmp" + relationCode(tokenCode) + " " + label);
-	 } 
-	
-	void genRelationalOp(int operatorCode){ 
-		 // Generate code to evaluate a relational operator 
-		 String trueLab = genLab(); 
-		 String skip = genLab(); 
-		 branchRelationalCompare(operatorCode, trueLab); 
-		 loadI(0); // Push false 
-		 branch(skip); 
-		 defineLab(trueLab); 
-		 loadI(1); // Push true 
-		 defineLab(skip); 
-	 }
+	}
+
+	void genRelationalOp(int operatorCode) {
+		// Generate code to evaluate a relational operator
+		String trueLab = genLab();
+		String skip = genLab();
+		branchRelationalCompare(operatorCode, trueLab);
+		loadI(0); // Push false
+		branch(skip);
+		defineLab(trueLab);
+		loadI(1); // Push true
+		defineLab(skip);
+	}
+
+	void genCall(String methodDescriptor) {
+		// Generate a static method call:
+		// invokestatic methodDescriptor
+		gen("invokestatic", methodDescriptor);
+	}
 
 	static Boolean isRelationalOp(int op) {
 		switch (op) {
@@ -434,7 +474,7 @@ public class CodeGenerating extends Visitor {
 	}
 
 	void visit(ifThenNode n) { // No else statement in CSX lite
-		String endLab; // label that will mark end of if stmt 
+		String endLab; // label that will mark end of if stmt
 		String elseLab; // label that will mark start of else part
 		// translate boolean condition, pushing it onto the stack
 		this.visit(n.condition);
@@ -483,17 +523,17 @@ public class CodeGenerating extends Visitor {
 	}
 
 	void visit(binaryOpNode n) {
-		// First translate the left and right operands 
-		 this.visit(n.leftOperand); 
-		 this.visit(n.rightOperand); 
-		 // Now the values of the operands are on the stack 
-		 // Is this a relational operator? 
-		 if (relationCode(n.operatorCode) == ""){ 
-		 gen(selectOpCode(n.operatorCode)); 
-		 } else { // relational operator 
-		 genRelationalOp(n.operatorCode); 
-		 } 
-		 n.adr = AdrModes.stack; 
+		// First translate the left and right operands
+		this.visit(n.leftOperand);
+		this.visit(n.rightOperand);
+		// Now the values of the operands are on the stack
+		// Is this a relational operator?
+		if (relationCode(n.operatorCode) == "") {
+			gen(selectOpCode(n.operatorCode));
+		} else { // relational operator
+			genRelationalOp(n.operatorCode);
+		}
+		n.adr = AdrModes.stack;
 	}
 
 	void visit(identNode n) {
@@ -514,14 +554,12 @@ public class CodeGenerating extends Visitor {
 		// In CSX lite no arrays exist and all variable names are local
 		// variables
 
-		// Load value of this variable onto stack using its index
-		gen("iload", n.varName.idinfo.varIndex);
-
 		if (n.subscriptVal.isNull()) {
 			// Simple (unsubscripted) identifier
 			if (n.varName.idinfo.kind == ASTNode.Kinds.Var
-					|| n.varName.idinfo.kind == ASTNode.Kinds.Value) {
-				// id is a scalar variable or const
+					|| n.varName.idinfo.kind == ASTNode.Kinds.Value
+					|| n.varName.idinfo.kind == ASTNode.Kinds.ScalarParm) {
+				// id is a scalar variable, parameter or const
 				if (n.varName.idinfo.adr == AdrModes.global) {
 					// id is a global
 					String label = n.varName.idinfo.label;
@@ -530,11 +568,20 @@ public class CodeGenerating extends Visitor {
 					n.intval = n.varName.idinfo.varIndex;
 					loadLocalInt(n.intval);
 				}
-			} else
-				// Handle arrays later
-				n.adr = AdrModes.stack;
+			} else { // varName is an array var or array parm
+				if (n.varName.idinfo.adr == AdrModes.global) {
+					n.label = n.varName.idinfo.label;
+					loadGlobalReference(n.label,
+							arrayTypeCode(n.varName.idinfo.type));
+				} else { // (n.varName.idinfo.adr == local)
+					n.intval = n.varName.idinfo.varIndex;
+					loadLocalReference(n.intval);
+				}
+			}
+			n.adr = AdrModes.stack;
 		} else {
 		} // Handle subscripted variables later
+
 	}
 
 	void visit(classNode n) {
@@ -649,14 +696,15 @@ public class CodeGenerating extends Visitor {
 	}
 
 	void visit(readNode n) {
-		if (n.targetVar.type == ASTNode.Types.Integer) {
-			gen("invokestatic", " CSXLib/readInt(I)V");
-		} else if (n.targetVar.type == ASTNode.Types.Character) {
-			gen("invokestatic", " CSXLib/readChar(C)V");
-		}
-
-		gen("invokestatic", " CSXLib/storeName(" + n.targetVar + ")V");
-
+		// Compute address associated with target variable
+		computeAdr(n.targetVar);
+		// Call library routine to do the read
+		if (n.targetVar.varName.idinfo.type == ASTNode.Types.Integer)
+			genCall("CSXLib/readInt()I");
+		else
+			// targetVar.varName.idinfo.type == Character
+			genCall("CSXLib/readChar()C");
+		storeName(n.targetVar);
 		this.visit(n.moreReads);
 	}
 
@@ -670,7 +718,7 @@ public class CodeGenerating extends Visitor {
 	}
 
 	void visit(strLitNode n) {
-		// TODO Auto-generated method stub
+		gen("idc", n.strval);
 
 	}
 
@@ -694,7 +742,18 @@ public class CodeGenerating extends Visitor {
 	}
 
 	void visit(whileNode n) {
-		// TODO Auto-generated method stub
+		String top = genLab();
+		String bottom = genLab();
+		if (!n.label.isNull()) {
+			((identNode) n.label).idinfo.topLabel = top;
+			((identNode) n.label).idinfo.bottomLabel = bottom;
+		}
+		defineLab(top);
+		this.visit(n.condition);
+		branchZ(bottom);
+		this.visit(n.loopBody);
+		branch(top);
+		defineLab(bottom);
 
 	}
 
@@ -714,11 +773,11 @@ public class CodeGenerating extends Visitor {
 	}
 
 	void visit(breakNode n) {
-		branch(n.label.idinfo.bottomLabel); 
+		branch(n.label.idinfo.bottomLabel);
 	}
 
 	void visit(continueNode n) {
-		branch(n.label.idinfo.topLabel); 
+		branch(n.label.idinfo.topLabel);
 	}
 
 	void visit(castNode n) {
