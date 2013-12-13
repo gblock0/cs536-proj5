@@ -761,25 +761,27 @@ public class CodeGenerating extends Visitor {
 		CLASS = n.className.idname;
 
 		gen(".class", "public", CLASS);
-		gen(".super", "java/lang/object");
+		gen(".super", "java/lang/Object");
 
 		this.visit(n.members.fields);
 
-		gen(".method", "public static", "main([Ljava/lang/String;)V");
+		gen(".method", " public static", "main([Ljava/lang/String;)V");
 
 		this.visit(n.members.fields);
 
-		gen("invokestatic", CLASS + "/main()V");
+		gen("invokestatic ", CLASS + "/main()V");
 		gen("return");
 		gen(".limit", "stack", 2);
 		gen(".end", "method");
-
+		
+		
 		this.visit(n.members.methods);
 
 	}
 
 	void visit(memberDeclsNode n) {
-		// TODO Auto-generated method stub
+		this.visit(n.fields);
+		this.visit(n.methods);
 
 	}
 
@@ -806,7 +808,8 @@ public class CodeGenerating extends Visitor {
 	}
 
 	void visit(methodDeclsNode n) {
-		// TODO Auto-generated method stub
+		this.visit(n.thisDecl);
+		this.visit(n.moreDecls);
 
 	}
 
@@ -956,7 +959,9 @@ public class CodeGenerating extends Visitor {
 	}
 
 	void visit(unaryOpNode n) {
-		// TODO Auto-generated method stub
+		 this.visit(n.operand);
+         loadI(1);
+         gen("ixor");
 
 	}
 
@@ -992,8 +997,10 @@ public class CodeGenerating extends Visitor {
 	}
 
 	void visit(fctCallNode n) {
-		// TODO Auto-generated method stub
+		 this.visit(n.methodArgs);
+         String typeCode = buildTypeCode(n.methodName.idname, n.methodArgs, typeCode(n.type));
 
+         gen("invokestatic", CLASS + "/" + typeCode);
 	}
 
 	void visit(returnNode n) {
@@ -1060,7 +1067,33 @@ public class CodeGenerating extends Visitor {
 	}
 
 	void visit(decrementNode n) {
-		// TODO Auto-generated method stub
+		if (n.target.subscriptVal.isNull()) {
+			// Simple (unsubscripted) identifier
+			this.visit(n.target); // Evaluate ident onto stack
+			loadI(1);
+			gen("isub"); // incremented ident now on stack
+			computeAdr(n.target);
+			storeName(n.target);
+		} else { // Subscripted array element
+			computeAdr(n.target); // Push array ref and index
+			gen("dup2"); // Duplicate array ref and index
+			// (one pair for load, 2nd pair for store)
+			// Now load the array element onto the stack
+			switch (n.target.type) {
+			case Integer:
+				gen("iaload");
+				break;
+			case Boolean:
+				gen("baload");
+				break;
+			case Character:
+				gen("caload");
+				break;
+			}
+			loadI(1);
+			gen("isub"); // incremented identifier now on stack
+			storeName(n.target);
+		}
 	}
 
 }
