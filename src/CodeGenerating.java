@@ -814,7 +814,7 @@ public class CodeGenerating extends Visitor {
 	}
 
 	void visit(methodDeclNode n) {
-		currentMethod = n; // We’re in a method now!
+		currentMethod = n; // Were in a method now!
 		n.name.idinfo.numberOfLocals = 0;
 		String newTypeCode = n.name.idname;
 		if (n.args.isNull()) {
@@ -842,7 +842,7 @@ public class CodeGenerating extends Visitor {
 			gen("ireturn");
 		}
 		// Generate end of method data;
-		// we’ll guestimate stack depth needed at 25
+		// we will guestimate stack depth needed at 25
 		// (almost certainly way too big!)
 		// generate: .limit stack 25
 		// generate: .limit locals n.name.idinfo.numberOfLocals
