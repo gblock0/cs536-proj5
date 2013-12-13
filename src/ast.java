@@ -691,6 +691,7 @@ abstract class exprNode extends exprNodeOption {
      protected CodeGenerating.AdrModes adr;
      protected int intval;
      protected String label;
+     protected int varIndex;
 
 	exprNode(){super();};
 	exprNode(int l,int c){
@@ -700,6 +701,7 @@ abstract class exprNode extends exprNodeOption {
 		adr = CodeGenerating.AdrModes.none;
 		intval = 0;
 		label = null;
+		varIndex = 0;
         };
         
 	exprNode(int l,int c,Types t,Kinds k) {

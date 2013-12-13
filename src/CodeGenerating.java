@@ -95,7 +95,7 @@ public class CodeGenerating extends Visitor {
 	}
 
 	void loadGlobalInt(String name) {
-		gen("genstatic", CLASS + "/" + name + " I");
+		gen("getstatic", CLASS + "/" + name + " I");
 	}
 
 	void loadLocalInt(int index) {
@@ -103,7 +103,7 @@ public class CodeGenerating extends Visitor {
 	}
 
 	void storeGlobalInt(String name) {
-		gen("putstatic", CLASS + "/" + name);
+		gen("putstatic", CLASS + "/" + name + "I");
 	}
 
 	void storeLocalInt(int index) {
@@ -122,6 +122,27 @@ public class CodeGenerating extends Visitor {
 			} else {
 				storeLocalInt(id.idinfo.varIndex);
 			}
+		}else{
+			// Check the lengths of source & target arrays
+			switch (id.type) {
+			case Integer:
+				genCall("CSXLib/checkIntArrayLength([I[I)[I");
+				break;
+			case Boolean:
+				genCall("CSXLib/checkBoolArrayLength([Z[Z)[Z");
+				break;
+			case Character:
+				genCall("CSXLib/checkCharArrayLength([C[C)[C");
+				break;
+			} // Now store source array in target variable
+			if (id.idinfo.adr == AdrModes.global) {
+				id.label = id.idinfo.label;
+				storeGlobalReference(id.label,
+						arrayTypeCode(id.idinfo.type));
+			} else { // (name.varName.idinfo.adr == local)
+				id.varIndex = id.idinfo.varIndex;
+				storeLocalReference(id.varIndex);
+			}
 		}
 	}
 
@@ -132,7 +153,7 @@ public class CodeGenerating extends Visitor {
 
 	int getLitValue(exprNode e) {
 		if (e instanceof intLitNode)
-			return e.intval;
+			return e.varIndex;
 		else if (e instanceof charLitNode)
 			return ((charLitNode) e).charval;
 		else if (e instanceof trueNode)
@@ -210,7 +231,7 @@ public class CodeGenerating extends Visitor {
 		// Generate a load of a reference to the stack from
 		// a static field:
 		// getstatic CLASS/name typeCode
-		gen("getstatic", CLASS + "/" + name + " " + typeCode);
+		gen("getstatic", CLASS + "/" + name, typeCode);
 	}
 
 	void loadLocalReference(int index) {
@@ -282,8 +303,7 @@ public class CodeGenerating extends Visitor {
 		// Generate a conditional branch to label based on tokenCode:
 		// Generate:
 		// "if_icmp"+relationCode(tokenCode) label
-		// maybe?
-		gen("if_icmp" + relationCode(tokenCode) + " " + label);
+		gen("if_icmp" + relationCode(tokenCode), label);
 	}
 
 	void genRelationalOp(int operatorCode) {
@@ -355,6 +375,100 @@ public class CodeGenerating extends Visitor {
 					+ ")";
 		return newTypeCode + returnCode;
 	}
+	
+	
+	// Compute address associated w/ name node
+	// DON'T load the value addressed onto the stack
+	void computeAdr(nameNode name) { // Final version
+		if (name.subscriptVal.isNull()) {
+			// Simple (unsubscripted) identifier
+			if (name.varName.idinfo.kind == ASTNode.Kinds.Var
+					|| name.varName.idinfo.kind == ASTNode.Kinds.ScalarParm) {
+				// id is a scalar variable
+				if (name.varName.idinfo.adr == AdrModes.global) {
+					name.adr = AdrModes.global;
+					name.label = name.varName.idinfo.label;
+				} else { // varName.idinfo.adr == Local
+					name.adr = AdrModes.local;
+					name.varIndex = name.varName.idinfo.varIndex;
+				}
+			} else { // Must be an array
+				// Push ref to target array to check length
+				if (name.varName.idinfo.adr == AdrModes.global) {
+					name.label = name.varName.idinfo.label;
+					loadGlobalReference(name.label,
+							arrayTypeCode(name.varName.idinfo.type));
+				} else { // (name.varName.idinfo.adr == local)
+					name.varIndex = name.varName.idinfo.varIndex;
+					loadLocalReference(name.varIndex);
+				}
+			}
+		} else { // This is subscripted variable
+			// Push array reference first
+			if (name.varName.idinfo.adr == AdrModes.global) {
+				name.label = name.varName.idinfo.label;
+				loadGlobalReference(name.label,
+						arrayTypeCode(name.varName.idinfo.type));
+			} else { // (name.varName.idinfo.adr == local)
+				name.varIndex = name.varName.idinfo.varIndex;
+				loadLocalReference(name.varIndex);
+			} // Next compute subscript expression
+			this.visit(name.subscriptVal);
+		}
+	}
+
+	void storeName(nameNode name) { // Final version
+		if (name.subscriptVal.isNull()) {
+			// Simple (unsubscripted) identifier
+			if (name.varName.idinfo.kind == ASTNode.Kinds.Var
+					|| name.varName.idinfo.kind == ASTNode.Kinds.ScalarParm) {
+				if (name.adr == AdrModes.global)
+					storeGlobalInt(name.label);
+				else
+					// (name.adr == Local)
+					storeLocalInt(name.varIndex);
+			} else {// Must be an array
+				// Check the lengths of source & target arrays
+				switch (name.type) {
+				case Integer:
+					genCall("CSXLib/checkIntArrayLength([I[I)[I");
+					break;
+				case Boolean:
+					genCall("CSXLib/checkBoolArrayLength([Z[Z)[Z");
+					break;
+				case Character:
+					genCall("CSXLib/checkCharArrayLength([C[C)[C");
+					break;
+				} // Now store source array in target variable
+				if (name.varName.idinfo.adr == AdrModes.global) {
+					name.label = name.varName.idinfo.label;
+					storeGlobalReference(name.label,
+							arrayTypeCode(name.varName.idinfo.type));
+				} else { // (name.varName.idinfo.adr == local)
+					name.varIndex = name.varName.idinfo.varIndex;
+					storeLocalReference(name.varIndex);
+				}
+			}
+		} else {
+			// This is a subscripted variable
+			// A reference to the target array, the
+			// subscript expression and the source expression
+			// have already been pushed.
+			// Now store the source value into the array
+			switch (name.type) {
+			case Integer:
+				gen("iastore");// Generate: iastore
+				break;
+			case Boolean:
+				gen("bastore"); // Generate: bastore
+				break;
+			case Character:
+				gen("castore"); // Generate: castore
+				break;
+			}
+		}
+	}
+
 
 	static Boolean isRelationalOp(int op) {
 		switch (op) {
@@ -625,8 +739,8 @@ public class CodeGenerating extends Visitor {
 					String label = n.varName.idinfo.label;
 					loadGlobalInt(label);
 				} else { // (n.varName.idinfo.adr == Local)
-					n.intval = n.varName.idinfo.varIndex;
-					loadLocalInt(n.intval);
+					n.varIndex = n.varName.idinfo.varIndex;
+					loadLocalInt(n.varIndex);
 				}
 			} else { // varName is an array var or array parm
 				if (n.varName.idinfo.adr == AdrModes.global) {
@@ -634,8 +748,8 @@ public class CodeGenerating extends Visitor {
 					loadGlobalReference(n.label,
 							arrayTypeCode(n.varName.idinfo.type));
 				} else { // (n.varName.idinfo.adr == local)
-					n.intval = n.varName.idinfo.varIndex;
-					loadLocalReference(n.intval);
+					n.varIndex = n.varName.idinfo.varIndex;
+					loadLocalReference(n.varIndex);
 				}
 			}
 
@@ -646,8 +760,8 @@ public class CodeGenerating extends Visitor {
 				loadGlobalReference(n.label,
 						arrayTypeCode(n.varName.idinfo.type));
 			} else { // (n.varName.idinfo.adr == local)
-				n.intval = n.varName.idinfo.varIndex;
-				loadLocalReference(n.intval);
+				n.varIndex = n.varName.idinfo.varIndex;
+				loadLocalReference(n.varIndex);
 			} // Next compute subscript expression
 			this.visit(n.subscriptVal);
 			// Now load the array element onto the stack
@@ -663,97 +777,6 @@ public class CodeGenerating extends Visitor {
 				break;
 			}
 		}
-	}
-
-	// Compute address associated w/ name node
-	// DON'T load the value addressed onto the stack
-	void computeAdr(nameNode name) { // Final version
-		if (name.subscriptVal.isNull()) {
-			// Simple (unsubscripted) identifier
-			if (name.varName.idinfo.kind == ASTNode.Kinds.Var
-					|| name.varName.idinfo.kind == ASTNode.Kinds.ScalarParm) {
-				// id is a scalar variable
-				if (name.varName.idinfo.adr == AdrModes.global) {
-					name.adr = AdrModes.global;
-					name.label = name.varName.idinfo.label;
-				} else { // varName.idinfo.adr == Local
-					name.adr = AdrModes.local;
-					name.intval = name.varName.idinfo.varIndex;
-				}
-			} else { // Must be an array
-				// Push ref to target array to check length
-				if (name.varName.idinfo.adr == AdrModes.global) {
-					name.label = name.varName.idinfo.label;
-					loadGlobalReference(name.label,
-							arrayTypeCode(name.varName.idinfo.type));
-				} else { // (name.varName.idinfo.adr == local)
-					name.intval = name.varName.idinfo.varIndex;
-					loadLocalReference(name.intval);
-				}
-			}
-		} else { // This is subscripted variable
-			// Push array reference first
-			if (name.varName.idinfo.adr == AdrModes.global) {
-				name.label = name.varName.idinfo.label;
-				loadGlobalReference(name.label,
-						arrayTypeCode(name.varName.idinfo.type));
-			} else { // (name.varName.idinfo.adr == local)
-				name.intval = name.varName.idinfo.varIndex;
-				loadLocalReference(name.intval);
-			} // Next compute subscript expression
-			this.visit(name.subscriptVal);
-		}
-	}
-
-	void storeName(nameNode name) { // Final version
-		if (name.subscriptVal.isNull()) {
-			// Simple (unsubscripted) identifier
-			if (name.varName.idinfo.kind == ASTNode.Kinds.Var
-					|| name.varName.idinfo.kind == ASTNode.Kinds.ScalarParm) {
-				if (name.adr == AdrModes.global)
-					storeGlobalInt(name.label);
-				else
-					// (name.adr == Local)
-					storeLocalInt(name.intval);
-			} else {// Must be an array
-				// Check the lengths of source & target arrays
-				switch (name.type) {
-				case Integer:
-					genCall("CSXLib/checkIntArrayLength([I[I)[I");
-					break;
-				case Boolean:
-					genCall("CSXLib/checkBoolArrayLength([Z[Z)[Z");
-					break;
-				case Character:
-					genCall("CSXLib/checkCharArrayLength([C[C)[C");
-					break;
-				} // Now store source array in target variable
-				if (name.varName.idinfo.adr == AdrModes.global) {
-					name.label = name.varName.idinfo.label;
-					storeGlobalReference(name.label,
-							arrayTypeCode(name.varName.idinfo.type));
-				} else { // (name.varName.idinfo.adr == local)
-					name.intval = name.varName.idinfo.varIndex;
-					storeLocalReference(name.intval);
-				}
-			}
-		} else
-			// This is a subscripted variable
-			// A reference to the target array, the
-			// subscript expression and the source expression
-			// have already been pushed.
-			// Now store the source value into the array
-			switch (name.type) {
-			case Integer:
-				gen("iastore");// Generate: iastore
-				break;
-			case Boolean:
-				gen("bastore"); // Generate: bastore
-				break;
-			case Character:
-				gen("castore"); // Generate: castore
-				break;
-			}
 	}
 
 	void visit(classNode n) {
