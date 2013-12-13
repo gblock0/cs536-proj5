@@ -6,6 +6,7 @@ class param{
 		this.type = type;
 		
 	}
+	
 	boolean isScalar(ASTNode.Kinds var){
 		boolean isScalar = false;
 		if(var == ASTNode.Kinds.Var || var == ASTNode.Kinds.Value || var == ASTNode.Kinds.ScalarParm){

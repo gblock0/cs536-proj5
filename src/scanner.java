@@ -11,6 +11,7 @@ class Scanner {
 		else 	System.err.println("Scanner is already initialized.");
 	}
 
+	
 	public static Symbol next_token() throws IOException{
 		if (lex == null) {
 			System.err.println("Scanner is not yet initialized.");
