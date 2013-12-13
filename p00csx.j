@@ -7,9 +7,9 @@
 	.end	method
 	.method	public static  main()V
 	idc	"Testing Program p00csx\n"
-	invokestatic	 CSXLib/printString(LJava/lang/String;)V
+	invokestatic	 CSXLib/printString(Ljava/lang/String;)V
 	idc	"Test compeleted\n"
-	invokestatic	 CSXLib/printString(LJava/lang/String;)V
+	invokestatic	 CSXLib/printString(Ljava/lang/String;)V
 	return
 	.limit	stack  25
 	.limit	locals  0

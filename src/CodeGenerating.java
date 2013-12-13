@@ -568,7 +568,7 @@ public class CodeGenerating extends Visitor {
 		} else if (n.outputValue.type == ASTNode.Types.Boolean) {
 			gen("invokestatic", " CSXLib/printBool(B)V");
 		} else if (n.outputValue.kind == ASTNode.Kinds.String) {
-			gen("invokestatic", " CSXLib/printString(LJava/lang/String;)V");
+			gen("invokestatic", " CSXLib/printString(Ljava/lang/String;)V");
 		} else if (n.outputValue.kind == ASTNode.Kinds.Array
 				|| n.outputValue.kind == ASTNode.Kinds.ArrayParm) {
 			gen("invokestatic", " CSXLib/printCharArray([C)V");
