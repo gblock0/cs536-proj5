@@ -972,7 +972,7 @@ public class CodeGenerating extends Visitor {
 	}
 
 	void visit(strLitNode n) {
-		gen("idc", n.strval);
+		gen("ldc", n.strval);
 
 	}
 
