@@ -1,86 +1,76 @@
 //
-//You may use this symbol table implementation or your own (from project 1)
+//You may use this stmbol table implementation or your own (from project 1)
 //
 import java.util.*;
 import java.io.*;
-
 class SymbolTable {
-	class Scope {
-		Hashtable<String, Symb> currentScope;
-		ArrayList<param> methodParams = new ArrayList<param>();
-		Scope next;
+   class Scope {
+      Hashtable<String,Symb> currentScope;
+      Scope next;
+      Scope() {  
+         currentScope = new Hashtable<String,Symb>();  
+         next = null;
+      }
+      Scope(Scope scopes) {
+         currentScope = new Hashtable<String,Symb>();
+         next = scopes;
+      }
+   }
 
-		Scope() {
-			currentScope = new Hashtable<String, Symb>();
-			next = null;
-		}
+   private Scope top;
 
-		Scope(Scope scopes) {
-			currentScope = new Hashtable<String, Symb>();
-			next = scopes;
-		}
-	}
+   SymbolTable() {top = new Scope();}
 
-	public Scope top;
+   public void openScope() {
+      top = new Scope(top); }
 
-	SymbolTable() {
-		top = new Scope();
-	}
-	
+   public void closeScope() throws EmptySTException {   
+      if (top == null)
+         throw new EmptySTException();
+      else top = top.next;
+   }
 
-	public void openScope() {
-		top = new Scope(top);
-	}
+   public void insert(Symb s)
+         throws DuplicateException, EmptySTException {
+      String key = (s.name().toLowerCase());
+      if (top == null)
+         throw new EmptySTException();
+      if (localLookup(key) != null)
+         throw new DuplicateException();
+      else top.currentScope.put(key,s);
+   }
 
-	public void closeScope() throws EmptySTException {
-		if (top == null)
-			throw new EmptySTException();
-		else
-			top = top.next;
-	}
+   public Symb localLookup(String s) {
+      String key = s.toLowerCase();
+      if (top == null)
+         return null;
+      Symb ans =top.currentScope.get(key);
+      return ans;
+   }
 
-	public void insert(Symb s) throws DuplicateException, EmptySTException {
-		String key = (s.name().toLowerCase());
-		if (top == null)
-			throw new EmptySTException();
-		if (localLookup(key) != null)
-			throw new DuplicateException();
-		else
-			top.currentScope.put(key, s);
-	}
+   public Symb globalLookup(String s) {
+      String key = s.toLowerCase();
+      Scope top = this.top;
+      while (top != null) {
+         Symb ans = top.currentScope.get(key);
+         if (ans != null)
+            return ans;
+         else top = top.next;
+      }
+      return null;
+   }
 
-	public Symb localLookup(String s) {
-		String key = s.toLowerCase();
-		if (top == null)
-			return null;
-		Symb ans = top.currentScope.get(key);
-		return ans;
-	}
+   public String toString() {
+      String ans = "";
+      Scope top = this.top;
+      while (top != null) {
+         ans = ans +  top.currentScope.toString()+"\n";
+         top = top.next;
+      }
+      return ans;
+   }
 
-	public Symb globalLookup(String s) {
-		String key = s.toLowerCase();
-		Scope top = this.top;
-		while (top != null) {
-			Symb ans = top.currentScope.get(key);
-			if (ans != null)
-				return ans;
-			else
-				top = top.next;
-		}
-		return null;
-	}
-
-	public String toString() {
-		String ans = "";
-		Scope top = this.top;
-		while (top != null) {
-			ans = ans + top.currentScope.toString() + "\n";
-			top = top.next;
-		}
-		return ans;
-	}
-
-	void dump(PrintStream ps) {
-		ps.print(toString());
-	}
+   void dump(PrintStream ps) {
+     ps.print(toString());
+   }
 }

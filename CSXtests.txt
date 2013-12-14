@@ -316,20 +316,157 @@ BUILD SUCCESSFUL
 Total time: 14 seconds
 
 ******************************** test-21.csx *****************************
+test2:
+     [java] *****Coded by Greg Bammel (906-337-7890) and Greg Block (905-814-9023)*****
+     [java] Begin CSX compilation of test-21.csx.
+     [java] CSX program parsed correctly.
+     [java] CSX compilation successfully completed.
+     [java] Translated program is in p21csx.j.
+     [echo] Run Jasmin on p21csx.j:
+     [java] Generated: p21csx.class
+     [move] Moving 1 file to /Users/gregoryblock/Dropbox/School/536/cs 536 project 5/bin
+     [echo] Begin execution of p21csx.class
+     [java] Testing Program p21csx
+     [java] Test compeleted
+BUILD SUCCESSFUL
+Total time: 16 seconds
 
 ******************************** test-22.csx *****************************
+test2:
+     [java] *****Coded by Greg Bammel (906-337-7890) and Greg Block (905-814-9023)*****
+     [java] Begin CSX compilation of test-22.csx.
+     [java] CSX program parsed correctly.
+     [java] CSX compilation successfully completed.
+     [java] Translated program is in p22csx.j.
+     [echo] Run Jasmin on p22csx.j:
+     [java] Generated: p22csx.class
+     [move] Moving 1 file to /Users/gregoryblock/Dropbox/School/536/cs 536 project 5/bin
+     [echo] Begin execution of p22csx.class
+     [java] Testing Program p22csx
+     [java] Iteration 1
+     [java] Iteration 2
+     [java] Iteration 3
+     [java] Iteration 4
+     [java] ( 11 )
+     [java] ( 12 )
+     [java] ( 21 )
+     [java] ( 22 )
+     [java] i = 3 j = 2
+     [java] Test compeleted
+BUILD SUCCESSFUL
+Total time: 14 seconds
 
 ******************************** test-23.csx *****************************
+test2:
+     [java] *****Coded by Greg Bammel (906-337-7890) and Greg Block (905-814-9023)*****
+     [java] Begin CSX compilation of test-23.csx.
+     [java] CSX program parsed correctly.
+     [java] CSX compilation successfully completed.
+     [java] Translated program is in p23csx.j.
+     [echo] Run Jasmin on p23csx.j:
+     [java] Generated: p23csx.class
+     [move] Moving 1 file to /Users/gregoryblock/Dropbox/School/536/cs 536 project 5/bin
+     [echo] Begin execution of p23csx.class
+     [java] Testing Program p23csx
+     [java] Test compeleted
+BUILD SUCCESSFUL
+Total time: 14 seconds
 
 ******************************** test-24.csx *****************************
+test2:
+     [java] *****Coded by Greg Bammel (906-337-7890) and Greg Block (905-814-9023)*****
+     [java] Begin CSX compilation of test-24.csx.
+     [java] CSX program parsed correctly.
+     [java] CSX compilation successfully completed.
+     [java] Translated program is in p24csx.j.
+     [echo] Run Jasmin on p24csx.j:
+     [java] Generated: p24csx.class
+     [move] Moving 1 file to /Users/gregoryblock/Dropbox/School/536/cs 536 project 5/bin
+     [echo] Begin execution of p24csx.class
+     [java] Testing program p24csx
+     [java] 1	10	100	1000	10000
+     [java] 100000	1000000	10000000	100000000	1000000000
+     [java] false	true
+BUILD SUCCESSFUL
+Total time: 15 seconds
 
 ******************************** test-25.csx *****************************
+test2:
+     [java] *****Coded by Greg Bammel (906-337-7890) and Greg Block (905-814-9023)*****
+     [java] Begin CSX compilation of test-25.csx.
+     [java] CSX program parsed correctly.
+     [java] CSX compilation successfully completed.
+     [java] Translated program is in p25csx.j.
+     [echo] Run Jasmin on p25csx.j:
+     [java] Generated: p25csx.class
+     [move] Moving 1 file to /Users/gregoryblock/Dropbox/School/536/cs 536 project 5/bin
+     [echo] Begin execution of p25csx.class
+     [java] Testing program p25csx
+     [java] Sorted values are:
+     [java] -1000000000	-10000000	-100000	-1000	-10
+     [java] 1	100	10000	1000000	100000000
+BUILD SUCCESSFUL
+Total time: 15 seconds
 
 ******************************** test-26.csx *****************************
+test2:
+     [java] *****Coded by Greg Bammel (906-337-7890) and Greg Block (905-814-9023)*****
+     [java] Begin CSX compilation of test-26.csx.
+     [java] CSX program parsed correctly.
+     [java] CSX compilation successfully completed.
+     [java] Translated program is in p26csx.j.
+     [echo] Run Jasmin on p26csx.j:
+     [java] Generated: p26csx.class
+     [move] Moving 1 file to /Users/gregoryblock/Dropbox/School/536/cs 536 project 5/bin
+     [echo] Begin execution of p26csx.class
+     [java] Testing Program p26csx
+     [java] Procedure 1 entered
+     [java] Procedure 1 exited
+     [java] Procedure 2 entered
+     [java] Procedure 2 exitedTest compeleted
+BUILD SUCCESSFUL
+Total time: 14 seconds
 
 ******************************** test-27.csx *****************************
+test2:
+     [java] *****Coded by Greg Bammel (906-337-7890) and Greg Block (905-814-9023)*****
+     [java] Begin CSX compilation of test-27.csx.
+     [java] CSX program parsed correctly.
+     [java] CSX compilation successfully completed.
+     [java] Translated program is in p27csx.j.
+     [echo] Run Jasmin on p27csx.j:
+     [java] Generated: p27csx.class
+     [move] Moving 1 file to /Users/gregoryblock/Dropbox/School/536/cs 536 project 5/bin
+     [echo] Begin execution of p27csx.class
+     [java] Testing Program p27csx
+     [java] Procedure 1 entered
+     [java] Procedure 1 exited123
+     [java] Procedure 2 entered
+     [java] Procedure 2 exitedtrue
+     [java] Test compeleted
+BUILD SUCCESSFUL
+Total time: 14 seconds
 
 ******************************** test-28.csx *****************************
+test2:
+     [java] *****Coded by Greg Bammel (906-337-7890) and Greg Block (905-814-9023)*****
+     [java] Begin CSX compilation of test-28.csx.
+     [java] CSX program parsed correctly.
+     [java] CSX compilation successfully completed.
+     [java] Translated program is in p28csx.j.
+     [echo] Run Jasmin on p28csx.j:
+     [java] Generated: p28csx.class
+     [move] Moving 1 file to /Users/gregoryblock/Dropbox/School/536/cs 536 project 5/bin
+     [echo] Begin execution of p28csx.class
+     [java] Testing Program p28csx
+     [java] Procedure 1 entered
+     [java] Procedure 1 exited
+     [java] Procedure 2 entered
+     [java] Procedure 1 entered
+     [java] Procedure 1 exited
+     [java] Procedure 2 exitedTest compeleted
+BUILD SUCCESSFUL
+Total time: 15 seconds
 
 ******************************** test-29.csx *****************************
 

@@ -1,981 +1,1084 @@
-import java.util.ArrayList;
-
-import javax.swing.LookAndFeel;
-
-// The following methods type check  AST nodes used in CSX Lite
-//  You will need to complete the methods after line 238 to type check the
+// The following methods type check   AST nodes used in CSX Lite
+//  You will need to complete the methods after line 242 to type check the
 //   rest of CSX
 //  Note that the type checking done for CSX lite may need to be extended to
 //   handle full CSX (for example binaryOpNode).
 
-public class TypeChecking extends Visitor {
+import java.util.*;
+public class TypeChecking extends Visitor { 
 
-	int typeErrors = 0; // Total number of type errors found
-	SymbolTable st;
-	boolean mainDeclared = false;
+//	static int typeErrors =  0;     // Total number of type errors found 
+//  	public static SymbolTable st = new SymbolTable(); 	
+	int typeErrors;     // Total number of type errors found 
+	SymbolTable st;	   
+        // A pointer to the root of the method currently being compiled
 	methodDeclNode currentMethod;
-
-	TypeChecking() {
+	
+	TypeChecking(){
 		typeErrors = 0;
-		st = new SymbolTable();
+		st = new SymbolTable(); 
+		currentMethod = null;
 	}
 
 	boolean isTypeCorrect(csxLiteNode n) {
-		this.visit(n);
-		return (typeErrors == 0);
-	}
-
-	boolean isTypeCorrect(classNode n) {
-		this.visit(n);
-		return (typeErrors == 0);
-	}
-
-	static void assertCondition(boolean assertion) {
-		if (!assertion)
-			throw new RuntimeException();
-	}
-
-	void typeMustBe(ASTNode.Types testType, ASTNode.Types requiredType,
-			String errorMsg) {
-		if ((testType != ASTNode.Types.Error) && (testType != requiredType)) {
-			System.out.println(errorMsg);
-			typeErrors++;
-		}
+        	this.visit(n);
+        	return (typeErrors == 0);
 	}
 	
-	void typeMustBe(ASTNode.Types testType, ASTNode.Types requiredType1, ASTNode.Types requiredType2,
-			String errorMsg) {
-		if ((testType != ASTNode.Types.Error) && (testType != requiredType1) && (testType != requiredType2)) {
-			System.out.println(errorMsg);
-			typeErrors++;
-		}
-	}
+	boolean isTypeCorrect(classNode n) {  
+    		this.visit(n);
+    		if (typeErrors > 0)
+    			System.out.println("Error count = "+typeErrors);
+    		return (typeErrors == 0); 
+}
 	
-	void typeBinaryOpCheck(ASTNode.Types testType1, ASTNode.Types testType2, String opCode){
-		if(testType1 == ASTNode.Types.Error || testType2 == ASTNode.Types.Error){
-			if(((testType1 != testType2) || (testType1 != ASTNode.Types.Character) ||  
-					(testType1 != ASTNode.Types.Integer) || (testType1 != ASTNode.Types.Boolean))){
-				typeErrors++;
-					System.out.println("Operands of " + opCode + " must be both either arithmetic or boolean");
+	static void assertCondition(boolean assertion){  
+		if (! assertion)
+			 throw new RuntimeException();
+	}
+	 void typeMustBe(ASTNode.Types testType,ASTNode.Types requiredType,String errorMsg) {
+		 if ((testType != ASTNode.Types.Error) && (testType != requiredType)) {
+                        System.out.println(errorMsg);
+                        typeErrors++;
+                }
+        }
+	  void typeMustBe(ASTNode.Types testType,ASTNode.Types testType1,
+			 		        ASTNode.Types testType2,String errorMsg) {
+		 		if ((testType != ASTNode.Types.Error) && (testType != testType1)
+                     && (testType != testType2)) {
+		 			System.out.println(errorMsg);
+		 			typeErrors++;  
+		 		}
+	 }
+	  void typeMustBe(ASTNode.Types testType,ASTNode.Types testType1,
+		        ASTNode.Types testType2,ASTNode.Types testType3,String errorMsg) {
+	if ((testType != ASTNode.Types.Error) && (testType != testType1)
+       && (testType != testType2) && (testType != testType3)) {
+		System.out.println(errorMsg);
+		typeErrors++;  
+	}
+}
+	 void typesMustBeEqual(ASTNode.Types type1,ASTNode.Types type2,String errorMsg) {
+		 if ((type1 != ASTNode.Types.Error) && (type2 != ASTNode.Types.Error) &&
+                     (type1 != type2)) {
+                        System.out.println(errorMsg);
+                        typeErrors++;
+                }
+        }
+	  void mustBeScalar(exprNode target, String errorMsg) {
+			if (target.type != ASTNode.Types.Error && !isScalar(target.kind)){
+	                	System.out.println(errorMsg);
+	                	typeErrors++;
 			}
-			
+	   }
+	   void mustBeAssignable(nameNode target,
+              exprNode source, String errorMsg) {
+		  if (target.type==ASTNode.Types.Error ||
+				  source.type==ASTNode.Types.Error)
+			  return; // Can't check values w/ error type
+		  if (isScalar(target.kind) ){
+			  if (isScalar(source.kind) &&
+					  source.type==target.type)
+				  return; // Assignment is OK
+		  }else if (isArray(target.kind) &&
+				    isArray(source.kind) &&
+				    source.type==target.type) {
+			  checkLengths(target,source,
+					  error(source) + "Source and target of the "
+							  	+ "assignment must have the same length.");
+			  	return; // Assignment is OK
+		  }else if (isArray(target.kind) &&
+				  target.type==ASTNode.Types.Character &&
+				  source.kind == ASTNode.Kinds.String ) {
+			  	checkLengths(target,source,
+			  			error(source) + "Source and target of the "
+			  					+ "assignment must have the same length.");
+			  	return; // Special case of string to char array asg
+		  } 
+		  // Illegal assignment if we reach here
+		  System.out.println(errorMsg);
+		  typeErrors++;
+	  }
+	   public int getLen(String strval) { //Compute length of str lit
+			int cnt =0;
+			// Ignore enclosing quotes and escapes
+			for (int i=1;i<strval.length()-1;i++) {
+				cnt++;
+				if (strval.charAt(i) == '\\')
+					i++;
+			}
+			return cnt;
 		}
+	   
+	    void checkLengths(nameNode target,
+               exprNode source, String errorMsg) {
+		   if (target.kind == ASTNode.Kinds.Array) {
+			   int targetLen =
+					   ((ArrayInfo) target.varName.idinfo).size;
+			   if (source.kind == ASTNode.Kinds.Array) {
+				   nameNode s = (nameNode) source;
+				   int sourceLen = 
+						   ((ArrayInfo) s.varName.idinfo).size;
+				   if (targetLen != sourceLen) {
+					   System.out.println(errorMsg);
+					   typeErrors++; }}
+			   else if (source.kind == ASTNode.Kinds.String){
+				   int sourceLen = 
+						   getLen(((strLitNode) source).strval);
+				   if (targetLen != sourceLen) {
+					   System.out.println(errorMsg);
+					   typeErrors++; }}
+		   		}
+	   }
+	   boolean isScalar(ASTNode.Kinds k) { // Is this kind scalar?
+	        switch(k){
+	          case Var: return true;
+	          case Value: return true;
+	          case Array: return false;
+	          case Method: return false;
+	          case ArrayParm: return false;
+	          case ScalarParm: return true;
+	          case String: return false;
+	          case VisibleLabel: return false;
+	          case HiddenLabel: return false;
+	          case Other: return false;
+	          default: throw new RuntimeException();
+	        }
+	        /*
+	        Var,	
+		    Value,
+		    Array,
+		    Method,
+		    ArrayParm,
+		    ScalarParm,
+		    String,
+		    VisibleLabel,
+		    HiddenLabel,
+		    Other
+	         */
+	 }
+	    boolean isAssignable(ASTNode.Kinds k) { // Can this kind of object be assigned to?
+	        switch(k){
+	          case Var: return true;
+	          case Value: return false;
+	          case Array: return true;
+	          case Method: return false;
+	          case ArrayParm: return true;
+	          case ScalarParm: return true;
+	          case String: return false;
+	          case VisibleLabel: return false;
+	          case HiddenLabel: return false;
+	          case Other: return false;
+	          default: throw new RuntimeException();
+	        }
+	 }  
+	boolean isArray(ASTNode.Kinds k) { // Is this kind scalar?
+		return k==ASTNode.Kinds.Array || k==ASTNode.Kinds.ArrayParm;
 	}
-
-	void typesMustBeEqual(ASTNode.Types type1, ASTNode.Types type2,
-			String errorMsg) {
-		if ((type1 != ASTNode.Types.Error) && (type2 != ASTNode.Types.Error)
-				&& (type1 != type2)) {
-			System.out.println(errorMsg);
-			typeErrors++;
-		}
-	}
-
+	
 	String error(ASTNode n) {
 		return "Error (line " + n.linenum + "): ";
+        }
+
+	public void compareParms(ParmInfo actuals, identNode m, int pos, ParmInfo formals) {
+		if (actuals.kind != formals.kind || actuals.type != formals.type) {
+			System.out.println(error(m)+ "In the call to "+
+			  m.idname+ ", parameter "+pos+ " has incorrect type.");
+			typeErrors++; }
+		if (actuals.next != null)
+			compareParms(actuals.next,m,pos+1,formals.next);
+	 }
+	
+	public boolean canMatchParms(ParmInfo actuals,  ParmInfo formals) {
+		if (actuals.kind != formals.kind || actuals.type != formals.type) 
+			return false;
+		if (actuals.next == null)
+			return true;
+		else return canMatchParms(actuals.next,formals.next);
+	 }
+	
+	public boolean parmsMatch(ParmInfo actuals, ParmInfo formals) {
+		if (ParmInfo.length(actuals) != ParmInfo.length(formals))
+			return false;
+		else if (actuals == null)
+			return true;
+			else return canMatchParms(actuals,formals);
 	}
+	
+	public boolean parmsMatch(ParmInfo actuals, ArrayList<ParmInfo> signatures) {
+		Iterator<ParmInfo> itr = signatures.iterator();
+		while (itr.hasNext()){
+			if (parmsMatch(actuals, itr.next()))
+				return true;
+		}
+		return false;
+	}
+	
+	
+	 void typesMustBeComparable(ASTNode.Types type1,ASTNode.Types type2,
+            String errorMsg) {
+		if ((type1 == ASTNode.Types.Error) || (type2 == ASTNode.Types.Error))
+			return;
+		if ((type1 == ASTNode.Types.Boolean) && (type2 == ASTNode.Types.Boolean))
+			return;
+		if (((type1 == ASTNode.Types.Integer) || (type1 == ASTNode.Types.Character)) &&
+				((type2 == ASTNode.Types.Integer) || (type2 == ASTNode.Types.Character)))
+			return;
+		System.out.println(errorMsg);
+		typeErrors++;
+	 }
+
+		 void isScalarAssignable(nameNode target, String errorMsg) {
+			if (target.kind==ASTNode.Kinds.Var ||
+			    target.kind==ASTNode.Kinds.ScalarParm) {
+				return;  // Scalar may be assigned to
+			} else {
+	                	System.out.println(errorMsg);
+	                	typeErrors++;
+			}
+	    }
 
 	static String opToString(int op) {
 		switch (op) {
-		case sym.PLUS:
-			return (" + ");
-		case sym.MINUS:
-			return (" - ");
-		case sym.EQ:
-			return (" == ");
-		case sym.NOTEQ:
-			return (" != ");
-		case sym.SLASH:
-			return (" / ");
-		case sym.LT:
-			return (" < ");
-		case sym.GEQ:
-			return (" >= ");
-		case sym.COR:
-			return (" || ");
-		case sym.TIMES:
-			return (" * ");
-		case sym.CAND:
-			return (" && ");
-		case sym.LEQ:
-			return (" <= ");
-		case sym.GT:
-			return (" > ");
-		default:
-			assertCondition(false);
-			return "";
+			case sym.PLUS:
+				return("+");
+			case sym.MINUS:
+				return("-");
+			case sym.COR:
+				return("||");
+			case sym.CAND:
+				return("&&");
+			case sym.LT:
+				return("<");
+			case sym.GT:
+				return(">");
+			case sym.LEQ:
+				return("<=");
+			case sym.GEQ:
+				return(">=");
+			case sym.EQ:
+				return("==");
+			case sym.NOTEQ:
+				return("!=");
+			case sym.TIMES:
+				return("*");
+			case sym.SLASH:
+				return("/");
+			case sym.NOT:
+				return("!");
+			default:
+				assertCondition(false);
+				return "";
 		}
 	}
 
-	static void printOp(int op) {
-		switch (op) {
-		case sym.PLUS:
-			System.out.print(" + ");
-			break;
-		case sym.MINUS:
-			System.out.print(" - ");
-			break;
-		case sym.EQ:
-			System.out.print(" == ");
-			break;
-		case sym.NOTEQ:
-			System.out.print(" != ");
-			break;
-		case sym.SLASH:
-			System.out.print(" / ");
-			return;
-		case sym.LT:
-			System.out.print(" < ");
-			return;
-		case sym.GEQ:
-			System.out.print(" >= ");
-			return;
-		case sym.COR:
-			System.out.print(" || ");
-			return;
-		case sym.TIMES:
-			System.out.print(" * ");
-			return;
-		case sym.CAND:
-			System.out.print(" && ");
-			return;
-		case sym.LEQ:
-			System.out.print(" <= ");
-			return;
-		case sym.GT:
-			System.out.print(" > ");
-			return;
-		default:
-			throw new Error();
-		}
-	}
-	
-	//checks to see if the variable is scalar
-	boolean isScalar(ASTNode.Kinds var){
-		boolean isScalar = false;
-		if(var == ASTNode.Kinds.Var || var == ASTNode.Kinds.Value || var == ASTNode.Kinds.ScalarParm){
-			isScalar = true;
-		}
-		
-		return isScalar;
-	}
 
-	void visit(csxLiteNode n) {
+
+	 void visit(csxLiteNode n){
 		this.visit(n.progDecls);
 		this.visit(n.progStmts);
 	}
-
-	void visit(fieldDeclsNode n) {
-		this.visit(n.thisField);
-		this.visit(n.moreFields);
+	
+	void visit(fieldDeclsNode n){
+			this.visit(n.thisField);
+			this.visit(n.moreFields);
 	}
+	void visit(nullFieldDeclsNode n){}
 
-	void visit(nullFieldDeclsNode n) {
+	void visit(stmtsNode n){
+		  //System.out.println ("In stmtsNode\n");
+		  this.visit(n.thisStmt);
+		  this.visit(n.moreStmts);
+
 	}
+	void visit(nullStmtsNode n){}
 
-	void visit(stmtsNode n) {
-		this.visit(n.thisStmt);
-		this.visit(n.moreStmts);
+	void visit(varDeclNode n){
+		SymbolInfo     id;
+		if (! n.initValue.isNull()) {
+        	this.visit(n.initValue);
+        	exprNode init = (exprNode) n.initValue;// Know initValue is non-null now
+			typesMustBeEqual(n.varType.type,
+							init.type,  
+                       	    error(n) + "The initializer must be of type "+
+                            n.varType.type);
+			mustBeScalar(init,
+                       	    error(n) + "The initializer must be a scalar. "); 
 
-	}
-
-	void visit(nullStmtsNode n) {
-	}
-
-	void visit(varDeclNode n) {
-
-		SymbolInfo id = (SymbolInfo) st.localLookup(n.varName.idname);
-		if (id != null) {
-			typeErrors++;
-			System.out.println(error(n) + id.name() + " is already declared.");
-			n.varName.type = ASTNode.Types.Error;
-
-		} else {
-			//variable is getting initialized
-			if(!n.initValue.isNull()){
-				this.visit(n.initValue);
-				typesMustBeEqual(n.varType.type, ((exprNode)n.initValue).type, error(n) + "Initilizer must be a " + n.varType.type);
-				
-				//check to make sure value is scalar
-				try{
-					assertCondition(isScalar(((exprNode)n.initValue).kind));
-				}catch(RuntimeException ex){
-					System.out.println(error(n) + "initial var value must be scalar");
-				}
-				
-			}
-			
-			//add var name to symbol table
-			id = new SymbolInfo(n.varName.idname, ASTNode.Kinds.Var, n.varType.type);
-			n.varName.type = n.varType.type;
-			try {
-				st.insert(id);
-			} catch (DuplicateException ex) {
-				/* don't have to worry about this case */
-			} catch (EmptySTException ex) {
-				/* don't have to worry about this case */
-			}
-			n.varName.idinfo = id;
-			
-			
-			
 		}
+
+        	id = (SymbolInfo) st.localLookup(n.varName.idname);
+        	if (id != null) {
+               		 System.out.println(error(n) + id.name()+
+                                     " is already declared.");
+                	typeErrors++;
+                	n.varName.type = ASTNode.Types.Error;
+
+        	} else {
+                	id = new SymbolInfo(n.varName.idname,
+                                         ASTNode.Kinds.Var, n.varType.type);
+                	n.varName.type = n.varType.type;
+			try {
+                		st.insert(id);
+			} catch (DuplicateException d) 
+                              { /* can't happen */ }
+			  catch (EmptySTException e) 
+                              { /* can't happen */ }
+                	n.varName.idinfo=id;
+        	}
 
 	};
-
-	void visit(nullTypeNode n) {
-		//No type checking needed!!!!
+	
+	void visit(nullTypeNode n){}
+	
+	void visit(intTypeNode n){
+		// No type checking needed
+	}
+	void visit(boolTypeNode n){
+		// No type checking needed
+	}
+	void visit(identNode n){
+		SymbolInfo    id;
+        	id =  (SymbolInfo) st.globalLookup(n.idname);
+        	if (id == null) {
+               	 	System.out.println(error(n) +  n.idname +
+                             " is not declared.");
+                typeErrors++;
+                n.type = ASTNode.Types.Error;
+        } else {
+                n.type = id.type; 
+                n.kind = id.kind; 
+                n.idinfo = id; // Save ptr to correct symbol table entry
+        	}
 	}
 
-	void visit(intTypeNode n) {
-		// no type checking needed!!!!
-	}
-
-	void visit(boolTypeNode n) {
-		// no type checking needed!!
-	}
-
-	void visit(identNode n) {
-		SymbolInfo id;
-		id = (SymbolInfo) st.globalLookup(n.idname); //Checks if the node is in the symbol table
-		if (id == null) { // If correct, it should always be in teh table
-			typeErrors++;
-			System.out.println(error(n) + n.idname + " is not declared.");
-			n.type = ASTNode.Types.Error;
+// Extend nameNode's method to handle subscripts
+	void visit(nameNode n){
+		this.visit(n.varName);
+        	n.type=n.varName.type;
+		if (n.subscriptVal.isNull()) {
+        		n.type=n.varName.type;
+        		n.kind=n.varName.kind;
 		} else {
-			n.type = id.type; //Since it's in the table, get the node details
-			n.kind = id.kind;
-			n.idinfo = id; 
+			this.visit(n.subscriptVal);
+			if (! isArray(n.varName.kind) ){
+               	 		System.out.println(error(n) +
+                                 "Only arrays can be subscripted.");
+                		n.type = ASTNode.Types.Error;
+               			typeErrors++;
+			} else {
+				exprNode subscript = (exprNode) n.subscriptVal;// Know subscriptVal is non-null now
+        			typeMustBe(subscript.type, 
+		           	    ASTNode.Types.Character,
+				        ASTNode.Types.Integer,
+                	    	     error(n) 
+                	    	     + "Array subscripts must be "
+                         	     +  "integer or character expressions.");
+        			mustBeScalar(subscript, 
+                                  error(n) + "The subscript must be a scalar. ");
+        			n.type=n.varName.type;
+        			n.kind= ASTNode.Kinds.Var;
+			}
 		}
+
+
 	}
 
-	void visit(nameNode n) {
-		this.visit(n.varName); 
-		
-		if(n.subscriptVal.isNull()){
-			n.type = n.varName.type;
-			n.kind = n.varName.kind;
-			return;
-		}
-		
-		this.visit(n.subscriptVal);
-		
-		try{
-			assertCondition(n.varName.kind == ASTNode.Kinds.Array);
-		}catch(RuntimeException ex){
-			typeErrors++;
-			System.out.println(error(n) + "subscript value can only be Arrays");
-			return;
-		}
-		
-		try{
-			exprNode subscript = (exprNode)n.subscriptVal;
-			assertCondition(isScalar(subscript.kind));
-			assertCondition(subscript.type == ASTNode.Types.Integer || subscript.type == ASTNode.Types.Character);
-		}catch(RuntimeException ex){
-			typeErrors++;
-			System.out.println(error(n) + "subsript value can only be int or char");
-		}
-		
-		n.type = n.varName.type;
-	}
-
-	void visit(asgNode n) {
+	void visit(asgNode n){
+	 
 		this.visit(n.target);
 		this.visit(n.source);
-		//Must be a type of variable that can be assigned.
-		try{
-			assertCondition(n.target.kind == ASTNode.Kinds.Var || n.target.kind == ASTNode.Kinds.Array
-					|| n.target.kind == ASTNode.Kinds.ScalarParm || n.target.kind == ASTNode.Kinds.ArrayParm);
-		}catch(RuntimeException ex){
-			typeErrors++;
-			System.out.println(error(n) + "Target has to be assignable");
-		}
-		
-		if(isScalar(n.target.kind)){
-			try{
-				assertCondition(n.target.kind != ASTNode.Kinds.Value); //Can't assign a value to a value but you can assign it to a var
-			}catch(RuntimeException ex){
-				typeErrors++;
-				System.out.println(error(n) + "Cannot assign to target becasue it is constant");
-			}
-			
-			typesMustBeEqual(n.source.type, n.target.type, error(n)
-					+ "Both the left and right"
-					+ " hand sides of an assignment must " + "have the same type.");
 
-			return;
-		}
-		if(n.target.kind == ASTNode.Kinds.Array && n.target.type == ASTNode.Types.Character 
-				&& n.source.kind == ASTNode.Kinds.String){
-			SymbolInfo id = (SymbolInfo)st.globalLookup(n.target.varName.idname);
-			String str = ((strLitNode)n.source).strval;
-			try{
-				String editedString = str.replace("\\", "1").replace("\\n", "1").replace("\\t", "1").replace("\\'", "1");
-				assertCondition(id.arraySize == editedString.length());
-			}catch(RuntimeException ex){
-				typeErrors++;
-				System.out.println(error(n) + "Array and String must have the same length");
-			}
-			
-			
-			return;
-		}
-		System.out.println(error(n) + "wrong assignment.");
+		if (! isAssignable(n.target.kind)) 
+               		 System.out.println(error(n) + 
+                                 "Target of assignment can't be changed.");
 
+		mustBeAssignable(n.target,n.source,
+                        error(n) + "Right hand side of an assignment is not "
+                            	+ "assignable to left hand side.");
 	}
 	
-	void visit(ifThenNode n) {
-		this.visit(n.condition); 
-		typeMustBe(n.condition.type, ASTNode.Types.Boolean, error(n) // Must have a true or false return type
-				+ "The control expression of an" + " if must be a bool.");
+	 void visit(incrementNode n){
+		 this.visit(n.target);
+		 typeMustBe(n.target.type,
+                 ASTNode.Types.Integer, ASTNode.Types.Character,
+                 error(n) + "Operand of ++"  +  " must be arithmetic.");
+		 mustBeScalar(n.target,
+                 error(n) + "Operand of ++"  +  " must be a scalar.");
+		 if (! isAssignable(n.target.kind)) 
+       		 System.out.println(error(n) + 
+                         "Target of ++ can't be changed.");		 }
+	 
+	 void visit(decrementNode n){
+		 this.visit(n.target);
+		 typeMustBe(n.target.type,
+                 ASTNode.Types.Integer, ASTNode.Types.Character,
+                 error(n) + "Operand of --"  +  " must be arithmetic.");
+		 mustBeScalar(n.target,
+                 error(n) + "Operand of --"  +  " must be a scalar.");
+		 if (! isAssignable(n.target.kind)) 
+       		 System.out.println(error(n) + 
+                         "Target of -- can't be changed.");
+		 }
 
-		this.visit(n.thenPart);
-		this.visit(n.elsePart);
+	void visit(ifThenNode n){
+		  this.visit(n.condition);
+        	  typeMustBe(n.condition.type, ASTNode.Types.Boolean,
+                	error(n) + "The control expression of an" +
+                          	" if must be a bool.");
+        	  mustBeScalar(n.condition,
+        			  error(n) + "The control expression of an" +
+        			  				" if must be a scalar.");
+
+		  this.visit(n.thenPart);
+		  this.visit(n.elsePart);
 	}
-
-	void visit(printNode n) {
+	  
+	 void visit(printNode n){
+		String errorMsg = 
+                	error(n) + 
+                           "Only integers, booleans, strings, " +
+                           "characters and character arrays may be written.";
 		this.visit(n.outputValue);
-		try{ //Must have some type that allows printing.
-			assertCondition(n.outputValue.type == ASTNode.Types.Integer ||
-					n.outputValue.type == ASTNode.Types.Boolean ||
-					n.outputValue.type == ASTNode.Types.Character ||
-					(n.outputValue.type == ASTNode.Types.Character && n.outputValue.kind == ASTNode.Kinds.Array)||
-					n.outputValue.kind == ASTNode.Kinds.String);
-		}catch(RuntimeException ex){
-			typeErrors++;
-			System.out.println(error(n) + "Can only print int, bool, char, char array, and string");
-		}
+		if (isScalar(n.outputValue.kind))
+        	typeMustBe(n.outputValue.type,
+			   ASTNode.Types.Integer,
+			   ASTNode.Types.Character, 
+			   ASTNode.Types.Boolean,
+			   errorMsg);
+		else if (isArray(n.outputValue.kind))
+        		typeMustBe(n.outputValue.type,
+				ASTNode.Types.Character, errorMsg);
+		else if (n.outputValue.kind != ASTNode.Kinds.String)
+			System.out.println(errorMsg);
 		this.visit(n.morePrints);
-	}
-
-	void visit(blockNode n) {
+	  }
+	 
+	  
+	  void visit(blockNode n){
 		// open a new local scope for the block body
-		st.openScope();
-		this.visit(n.decls);
-		this.visit(n.stmts);
-		// close this block's local scope
-		try {
-			st.closeScope();
-		} catch (EmptySTException e) { /* can't happen */
-		}
-	}
-
-	void visit(binaryOpNode n) {
-
-		assertCondition(n.operatorCode == sym.PLUS
-				|| n.operatorCode == sym.MINUS || n.operatorCode == sym.EQ
-				|| n.operatorCode == sym.NOTEQ || n.operatorCode == sym.SLASH ||
-				n.operatorCode == sym.LT || n.operatorCode == sym.GEQ ||
-				n.operatorCode == sym.COR || n.operatorCode == sym.TIMES ||
-				n.operatorCode == sym.TIMES || n.operatorCode == sym.CAND ||
-				n.operatorCode == sym.LEQ || n.operatorCode == sym.GT);
-		
-		n.kind = ASTNode.Kinds.Value;
-		
-		this.visit(n.leftOperand);
-		this.visit(n.rightOperand);
-		
-		try{
-			assertCondition(isScalar(n.leftOperand.kind));
-			assertCondition(isScalar(n.rightOperand.kind));
-			
-		}catch(RuntimeException ex){
-			typeErrors++;
-			System.out.println(error(n) + "When using a "+ opToString(n.operatorCode) +" the operands must be scalar");
-		}
-		
-		if (n.operatorCode == sym.PLUS || n.operatorCode == sym.MINUS || n.operatorCode == sym.SLASH || n.operatorCode == sym.TIMES) {
-			n.type = ASTNode.Types.Integer;
-			
-			typeMustBe(n.leftOperand.type, ASTNode.Types.Integer, ASTNode.Types.Character, error(n)
-					+ "Left operand of" + opToString(n.operatorCode)
-					+ "must be arthimetic.");
-			typeMustBe(n.rightOperand.type, ASTNode.Types.Integer, ASTNode.Types.Character, error(n)
-					+ "Right operand of" + opToString(n.operatorCode)
-					+ "must be arthimetic.");
-			
-		} else if(n.operatorCode == sym.COR || n.operatorCode == sym.CAND){ 
-			n.type = ASTNode.Types.Boolean;
-			String errorMsg = error(n) + "Both operands of"
-					+ opToString(n.operatorCode) + "must have the same type.";
-			typesMustBeEqual(n.leftOperand.type, n.rightOperand.type, errorMsg);
-		}else{
-			//relational operator
-			
-			n.type = ASTNode.Types.Boolean;
-			typeBinaryOpCheck(n.leftOperand.type, n.rightOperand.type, opToString(n.operatorCode));
-		}
-	}
-
-	void visit(intLitNode n) {
-		n.type = ASTNode.Types.Integer;
-		n.kind = ASTNode.Kinds.Var;
-	}
-
-	void visit(classNode n) {
-		SymbolInfo id = (SymbolInfo) this.st.localLookup(n.className.idname);
-		if (id != null) {
-			typeErrors++;
-			System.out.println(error(n) + id.name()
-					+ " is already declared.");
-			n.className.type = ASTNode.Types.Error;
-		} else {
-			id = new SymbolInfo(n.className.idname, ASTNode.Kinds.Var,
-					n.className.type);
-
-			try {
-				this.st.insert(id);
-				this.st.openScope();
-				this.visit(n.members);
-				this.st.closeScope();
-			} catch (DuplicateException ex) {
-				/* can't happen */
-			} catch (EmptySTException ex) {
-				/* can't happen */
-			}
-		}
-	}
-
-	void visit(memberDeclsNode n) {
-		this.visit(n.fields);
-		this.visit(n.methods);
-
-	}
-
-	void visit(methodDeclsNode n) {
-		this.visit(n.thisDecl);
-		this.visit(n.moreDecls);
-	}
-
-	//Null statements don't need to be handled
-	void visit(nullStmtNode n) {
-	}
-
-	void visit(nullReadNode n) {// Null doesn't matter
-	}
-
-	void visit(nullPrintNode n) { //Null doesn't matter
-	}
-
-	void visit(nullExprNode n) {
-	}
-
-	void visit(nullMethodDeclsNode n) {
-	}
-
-	void visit(methodDeclNode n) {
-		SymbolInfo id = (SymbolInfo) this.st.localLookup(n.name.idname);
-		
-		if(this.mainDeclared){ //Main method is declared last
-			typeErrors++;
-			System.out.println(error(n) + "a method cannot be declared after main");
-			n.name.type = ASTNode.Types.Error;
-		}
-		
-		if(n.name.idname.equals("main")){ //This is the main, make sure that there's no other method calls
-			this.mainDeclared = true;
-			if(n.returnType.type != ASTNode.Types.Void){
-				typeErrors++;
-				System.out.println(error(n) + "main method must be of void type");
-				n.name.type = ASTNode.Types.Error;
-			}
-			if(!n.args.isNull()){ //Main can't have any arguements
-				typeErrors++;
-				System.out.println(error(n) + "main method cannot have any arguments");
-				n.name.type = ASTNode.Types.Error;
-			}
-		}
-		
-		if(id == null){ //If it's null, then you create a new node.
-			id = new SymbolInfo(n.name.idname, ASTNode.Kinds.Method, n.returnType.type);
-			
-			try{
-				this.st.insert(id);
-			}catch(DuplicateException ex){
-				/* can't happen*/
-			}catch(EmptySTException ex){
-				/* can't happen*/
-			}
-			
-			this.st.openScope();
-			
-			this.visit(n.args);
-			id.methodParams.add(this.st.top.methodParams);
-			currentMethod = n;
-			this.visit(n.decls);//Visit all statements and decls nodes!
-			this.visit(n.stmts);
-			
-			
-			try{
-				this.st.closeScope();
-			}catch(EmptySTException ex){
-				//can't happen
-			}
-			
-			n.name.idinfo = id;
-			
-		}else{
-			if(id.kind != ASTNode.Kinds.Method){ //This method already exists with these parameters
-				typeErrors++;
-				System.out.println(error(n) + n.name.idname + " is already declared");
-				n.name.type = ASTNode.Types.Error;
-			}
-			
-			this.st.openScope();
-			this.visit(n.args);
-			
-			if(id.type != n.returnType.type){ //Return type doesn't match the assignment
-				typeErrors++;
-				System.out.println(error(n) + n.name.idname + " cannot return this type");
-				n.name.type = ASTNode.Types.Error;
-	
-			}
-			if(id.kind == ASTNode.Kinds.Method && id.contains(this.st.top.methodParams)){ //Top is the scope
-				typeErrors++;
-				System.out.println(error(n) + n.name.idname + " cannot be overloaded");
-				n.name.type = ASTNode.Types.Error;
-			}else if(id.kind == ASTNode.Kinds.Method){
-				id.methodParams.add(this.st.top.methodParams);
-			}
-			
-			
-			currentMethod = n; //Next method and visit the method / decls / statements
+			st.openScope();
 			this.visit(n.decls);
 			this.visit(n.stmts);
-			try{
-				this.st.closeScope();
-			}catch(EmptySTException ex){
-				//can't happen
-			}
-		}
-		
-	}
+			// close this block's local scope
+			try { st.closeScope();
+			}  catch (EmptySTException e) 
+	                      { /* can't happen */ }
+	  }
 
-	void visit(incrementNode n) {
-		this.visit(n.target);
-		
-		try{
-			assertCondition((n.target.type == ASTNode.Types.Character || n.target.type == ASTNode.Types.Integer) &&
-					(n.target.kind == ASTNode.Kinds.Var || n.target.kind == ASTNode.Kinds.ArrayParm 
-					|| n.target.kind == ASTNode.Kinds.ScalarParm)); //Must be an incrementable type
-			
-		}catch(RuntimeException ex){
-			typeErrors++;
-			System.out.println(error(n) + "Cannot increment this target");
-		}
-	}
-
-	void visit(decrementNode n) {
-		this.visit(n.target);
-		
-		try{
-			assertCondition((n.target.type == ASTNode.Types.Character || n.target.type == ASTNode.Types.Integer) &&
-					(n.target.kind == ASTNode.Kinds.Var || n.target.kind == ASTNode.Kinds.ArrayParm 
-					|| n.target.kind == ASTNode.Kinds.ScalarParm));//Must be an decrement type
-			
-		}catch(RuntimeException ex){
-			typeErrors++;
-			System.out.println(error(n) + "Cannot decrement this target");
-		}
-	}
-
-	void visit(argDeclsNode n) {
-		this.visit(n.thisDecl);
-		this.visit(n.moreDecls); //Always look for more nodes!
-	}
-
-	void visit(nullArgDeclsNode n) {
-	}
-
-	void visit(valArgDeclNode n) {
-		
-		SymbolInfo id = (SymbolInfo) this.st.localLookup(n.argName.idname);
-		if(! (id == null)) { //If it's not null, it exists
-			typeErrors++;
-			n.argName.type = ASTNode.Types.Error;
-			System.out.println(error(n) + id.name() + " has already been declared");
-		}else{ //Or add it for reference later
-			id = new SymbolInfo(n.argName.idname, ASTNode.Kinds.ScalarParm, n.argType.type);
-		
-		n.argName.type = n.argType.type;
-		try {
-			this.st.insert(id);
-		} 
-		catch (DuplicateException ex) {} 
-		catch (EmptySTException ex){} //can't happen
-		n.argName.idinfo= id;
-		this.st.top.methodParams.add(new param(n.argType.type, ASTNode.Kinds.ScalarParm));
-	}
-	}
-
-	void visit(arrayArgDeclNode n) {
-		SymbolInfo id = (SymbolInfo) this.st.localLookup(n.argName.idname);
-		if(id != null){
-			typeErrors++;
-			System.out.println(error(n) + " Argname Already declared"); //Array already exists
-			n.argName.type = ASTNode.Types.Error;		
-		}else{
-			id = new SymbolInfo(n.argName.idname, ASTNode.Kinds.ArrayParm, n.elementType.type);
-			n.argName.type = n.elementType.type;
-			
-			try {
-				this.st.insert(id);
-			} 
-			catch (DuplicateException ex) {} 
-			catch (EmptySTException ex){}
-			n.argName.idinfo = id;
-			this.st.top.methodParams.add(new param(n.elementType.type, ASTNode.Kinds.ArrayParm));
-		}
-	}
-
-	void visit(constDeclNode n) {
-		SymbolInfo id = (SymbolInfo) this.st.localLookup(n.constName.idname);
-		
-		if(id != null){
-			typeErrors++;
-			System.out.println(error(n) + id.name() + " is already declared");
-			n.constName.type = ASTNode.Types.Error;
-		}else{
-			this.visit(n.constValue);
-			try{
-				assertCondition(isScalar(n.constValue.kind));
-			}catch(RuntimeException ex){
-				typeErrors++;
-				System.out.println(error(n) + "Constants can only be scalars");
-			}
-			
-			id = new SymbolInfo(n.constName.idname, ASTNode.Kinds.Value, n.constValue.type);
-			n.constName.type = n.constValue.type;
-			try {
-				this.st.insert(id);
-			} catch (DuplicateException ex) {
-				/* can't happen */
-			} catch (EmptySTException ex) {
-				/* can't happen */
-			}
-			
-			n.constName.idinfo = id;
-		}
-	}
-
-	void visit(arrayDeclNode n) {
-		SymbolInfo id = (SymbolInfo) this.st.localLookup(n.arrayName.idname);
-		
-		if(id != null){
-			typeErrors++;
-			System.out.println(error(n) + id.name() + " is already declared");
-			n.arrayName.type = ASTNode.Types.Error;
-		}else{
-			id = new SymbolInfo(n.arrayName.idname, ASTNode.Kinds.Array, n.elementType.type);
-			
-			if(n.arraySize.intval < 1){
-				typeErrors++;
-				System.out.println(error(n) + n.arrayName.idname + " must have atleast 1 element");
-				n.arrayName.type = ASTNode.Types.Error;
-				id.arraySize = 1;
-			}else{
-				id.arraySize = n.arraySize.intval;
-				n.arrayName.type = n.elementType.type;
-			}
-			
-			try {
-				this.st.insert(id);
-			} catch (DuplicateException ex) {
-				/* can't happen */
-			} catch (EmptySTException ex) {
-				/* can't happen */
-			}
-			n.arrayName.idinfo = id;
-		}
-	}
-
-	void visit(charTypeNode n) {
-		// don't need to worry about this
-	}
-
-	void visit(voidTypeNode n) {
-		// don't need to worry about this
-	}
-
-	void visit(whileNode n) {
-		this.visit(n.condition);
-		try{
-			assertCondition(n.condition.type == ASTNode.Types.Boolean && isScalar(n.condition.kind));
-		}catch(RuntimeException ex){
-			typeErrors++;
-			System.out.println(error(n) + "Condition should be of type boolean and kind should be a scalar");
-		}
-		
-		if(n.label.isNull()){
-			this.visit(n.loopBody);
-			return;
-		}else{
-			SymbolInfo id = (SymbolInfo) this.st.localLookup(((identNode)n.label).idname);
-			if(id == null){
-				id = new SymbolInfo(((identNode)n.label).idname, ASTNode.Kinds.VisibleLabel, ASTNode.Types.Void);
-				try{
-					this.st.insert(id);
-				}catch(DuplicateException ex){}
-				catch(EmptySTException ex){}
-				
-				this.visit(n.loopBody);
-				id.kind = ASTNode.Kinds.HiddenLabel;
-			}else{
-				typeErrors++;
-				System.out.println(error(n) + "label is already declared");
-				((identNode)n.label).type = ASTNode.Types.Error;
-			}
-		}
-		
-	}
-
-	void visit(breakNode n) {
-		SymbolInfo id = (SymbolInfo) this.st.globalLookup(n.label.idname);
-		
-		if(id == null){
-			typeErrors++;
-			System.out.println(error(n) + n.label.idname + " isn't a correct label");
-			return;
-		}
-		try{
-			assertCondition(id.kind == ASTNode.Kinds.VisibleLabel);
-		}catch(RuntimeException ex){
-			typeErrors++;
-			System.out.println(error(n) + "Label " + n.label.idname + " is out of scope");
-		}
-	}
-
-	void visit(continueNode n) {
-		SymbolInfo id = (SymbolInfo) this.st.globalLookup(n.label.idname);
-		
-		if(id == null){
-			typeErrors++;
-			System.out.println(error(n) + n.label.idname + " isn't a correct label");
-			return;
-		}
-		try{
-			assertCondition(id.kind == ASTNode.Kinds.VisibleLabel);
-		}catch(RuntimeException ex){
-			typeErrors++;
-			System.out.println(error(n) + "Label " + n.label.idname + " is out of scope");
-		}
-	}
-
-	void visit(callNode n) {
-		SymbolInfo id = (SymbolInfo) this.st.localLookup(n.methodName.idname);
-		
-		if(id == null){
-			typeErrors++;
-			System.out.println(error(n) + n.methodName.idname + "isn't declared");
-			return;
-		}
-		
-		try{
-			assertCondition(id.type == ASTNode.Types.Void && id.kind == ASTNode.Kinds.Method);
-		}catch(RuntimeException ex){
-			typeErrors++;
-			System.out.println(error(n) + n.methodName.idname + "No return value needed");
-		}
-		
-		this.visit(n.args);
-		
-		ArrayList<param> args = new ArrayList<param>();
-		argsNodeOption argsNodeOp = n.args;
-
-		while(!argsNodeOp.isNull()){
-			param p = new param(((argsNode)argsNodeOp).argVal.type, ((argsNode)argsNodeOp).argVal.kind);
-			args.add(p);
-			argsNodeOp = ((argsNode)argsNodeOp).moreArgs;
-		}
-		
-		try{
-			assertCondition(id.contains(args));
-		}catch(RuntimeException ex){
-			typeErrors++;
-			n.methodName.type = ASTNode.Types.Error;
-			if(id.methodParams.size() == 0){
-				System.out.println(error(n) + n.methodName.idname + " does not need any params");
-			}
-			else if(id.methodParams.size() == 1){
-				if(id.methodParams.get(0).size() != args.size()){
-					System.out.println(error(n) + "" +  n.methodName.idname 
-							+ " must have the following number of parameters: " + id.methodParams.get(0).size());
-					
-				}
-				else{
-					for(int i = 0; i < id.methodParams.get(0).size(); i++){
-						if(i == args.size())break;
-						if(!args.get(i).CompareTo(id.methodParams.get(0).get(i))){
-							System.out.println(error(n) + " when calling " + n.methodName.idname + 
-									" the follow parameter has an incorrect type: " + n.methodName.idname);
-						}
-					}
-				}
-				
-			}else{
-				System.out.println(error(n) + " when calling " + n.methodName.idname + 
-						" the follow definitions do not match the parameters. " + n.methodName.idname);
-			}
-			}
-			
-		}
-		
 	
+	  void visit(binaryOpNode n){
+		  
+		this.visit(n.leftOperand);
+		this.visit(n.rightOperand);
 
-	void visit(readNode n) {
+		mustBeScalar(n.leftOperand,
+                    error(n) + "Left operand of "
+                            + opToString(n.operatorCode) 
+                      	    +  " must be a scalar.");
+        	mustBeScalar(n.rightOperand,
+                    error(n) + "Right operand of "
+                            + opToString(n.operatorCode) 
+                      	    +  " must be a scalar.");
+        	if(n.operatorCode == sym.PLUS ||
+		   n.operatorCode == sym.MINUS ||
+		   n.operatorCode == sym.TIMES ||
+		   n.operatorCode == sym.SLASH) {
+        		n.type = ASTNode.Types.Integer;
+        		n.kind = ASTNode.Kinds.Value;
+        		typeMustBe(n.leftOperand.type,
+                                   ASTNode.Types.Integer,
+				   ASTNode.Types.Character,
+                	    error(n) + "Left operand of "
+                                    + opToString(n.operatorCode) 
+                         	    +  " must be arithmetic.");
+        		typeMustBe(n.rightOperand.type,
+                                   ASTNode.Types.Integer,
+				   ASTNode.Types.Character,
+                	    error(n) + "Right operand of "
+                                    + opToString(n.operatorCode) 
+                         	    +  " must be arithmetic.");
+		} else if (n.operatorCode == sym.COR ||
+		           n.operatorCode == sym.CAND) {
+        		n.type = ASTNode.Types.Boolean;
+        		n.kind = ASTNode.Kinds.Value;
+        		typeMustBe(n.leftOperand.type,
+			    ASTNode.Types.Boolean,
+                	    error(n) + "Left operand of "
+                                    + opToString(n.operatorCode) 
+                         	    +  " must be a bool.");
+        		typeMustBe(n.rightOperand.type,
+			    ASTNode.Types.Boolean,
+                	    error(n) + "Right operand of "
+                                    + opToString(n.operatorCode) 
+                         	    +  " must be a bool.");
+		} else // Must be a relational operator
+		       typesMustBeComparable(n.leftOperand.type,
+                                             n.rightOperand.type,
+                	    error(n) + "Operands of "
+                                    + opToString(n.operatorCode) 
+                         	    +  " must both be arithmetic"
+                         	    +  " or both must be boolean.");
+	  }
+
+	
+	
+	void visit(intLitNode n){
+	//      All intLits are automatically type-correct
+	}
+
+
+ 
+
+	 
+	 void visit(classNode n){
+		this.visit(n.members);
+		}
+
+	 void  visit(memberDeclsNode n){
+		this.visit(n.fields);
+		this.visit(n.methods);
+		if (n.methods.isNull()){
+			System.out.println(error(n) + 
+                    "The last method in a class must be "+
+                    "declared as void main() {...");
+          	typeErrors++;}
+		else checkLastMethod((methodDeclsNode)n.methods);
+	 }
+	 
+	 void  visit(methodDeclsNode n){
+		this.visit(n.thisDecl);
+		this.visit(n.moreDecls);
+		 }
+	 
+	  void checkLastMethod(methodDeclsNode n) {
+		if (n.moreDecls.isNull())
+			checkLastMethod(n.thisDecl);
+		else	checkLastMethod((methodDeclsNode)n.moreDecls);
+	}
+
+	 // check that last method is void main() {...}
+        void checkLastMethod(methodDeclNode n) {
+        	if (!n.name.idname.equalsIgnoreCase("main") ||
+                   (! n.args.isNull()) ||
+                   (((typeNode) n.returnType).type != ASTNode.Types.Void)) {
+               		 System.out.println(error(n) + 
+                          "The last method in a class must be "+
+                          "declared as void main() {...");
+                	typeErrors++;
+        	}
+        }
+   
+	 void visit(nullStmtNode n){}
+	 
+	 void visit(nullReadNode n){}
+
+	 void visit(nullPrintNode n){}
+
+	 void visit(nullExprNode n){}
+
+	 void visit(nullMethodDeclsNode n){}
+
+	 boolean possibleOverload(SymbolInfo currentDef, SymbolInfo newDef) {
+		 return (currentDef.kind == ASTNode.Kinds.Method) &&
+				(currentDef.type == newDef.type);
+	 }
+	 
+	 void visit(methodDeclNode n){
+		SymbolInfo    lookupid;
+        	MethodInfo    id;
+
+                n.name.type = ((typeNode) n.returnType).type;
+                n.name.kind = ASTNode.Kinds.Method;
+                id = new MethodInfo(n.name.idname, n.name.type);
+
+                //System.out.println("Error count in = "+typeErrors);
+        	lookupid = (SymbolInfo) st.localLookup(n.name.idname);
+        	if (lookupid != null && !possibleOverload(lookupid,id)) {
+               	System.out.println(error(n) + lookupid.name()+
+                                     " is already declared.");
+                typeErrors++;
+                n.name.type = ASTNode.Types.Error;
+
+        	} else { try {
+                		st.insert(id);
+			} catch (DuplicateException d) 
+                              { /* can't happen */ }
+			  catch (EmptySTException e) 
+                              { /* can't happen */ }
+        	}
+		// open a new local scope for the method body
+		st.openScope();
+		// remember which method we are compiling
+		currentMethod = n; 
+		//System.out.println("Error countbefore args = "+typeErrors);
+		this.visit(n.args);   
+		id.parms=(ParmInfo) n.args.parms;  // parms defined as Symb to simplify compilation
+        n.name.idinfo=id;
+        // Is this an overloading of method name?
+        if (lookupid != null && possibleOverload(lookupid,id)){
+        	MethodInfo methodDef = (MethodInfo) lookupid;
+        	if (!methodDef.isOverloaded){
+        		// First overloading
+        		// See if previous and current defs diff in their parm lists
+        		if (ParmInfo.differentParmsList(id.parms, methodDef.parms)) {
+        			methodDef.isOverloaded = true;
+        			methodDef.signatures.add(methodDef.parms);
+        			methodDef.signatures.add(id.parms);
+        			methodDef.parms = null; // parms only used for non-overloaded methods
+        			//System.out.println(error(n) + "Updated method def:"+methodDef);
+        		}else { System.out.println(error(n) + 
+        				 "Illegal overloaded method definition (this parameter combination already used).");
+        		 		typeErrors++;}
+        	}else {//  See if  current and all previous overloaded defs differ in their parm lists
+        		if (ParmInfo.differentParmsList(id.parms, methodDef.signatures)) {
+        			methodDef.signatures.add(id.parms);
+        			//System.out.println(error(n) + "Updated method def:"+methodDef);
+        		}else { System.out.println(error(n) + 
+        				"Illegal overloaded method definition (this parameter combination already used).");
+        		 		typeErrors++;}
+        		//System.out.println(error(n) + "Multiple overloadings not implemented yet.");
+        	}
+        }
+        //System.out.println("Error count  decls= "+typeErrors);
+		this.visit(n.decls);
+		//System.out.println("Error count before stmts= "+typeErrors);
+		this.visit(n.stmts);
+		//System.out.println("Error count after stmts = "+typeErrors);
+		// close this method's local scope
+		try {
+			st.closeScope();
+		}  catch (EmptySTException e) 
+                             { /* can't happen */ }
+		// we are done w/ this method
+		currentMethod = null;
+	 }
+
+	 
+	void visit(argDeclsNode n){
+		this.visit(n.thisDecl);
+		this.visit(n.moreDecls);
+		n.parms=n.thisDecl.parm;
+		((ParmInfo) n.parms).next=((ParmInfo) n.moreDecls.parms);
+	}
+
+	void visit(nullArgDeclsNode n){}
+
+	
+	void visit(valArgDeclNode n){
+		SymbolInfo     lookupid;
+        	ParmInfo       id;
+
+                n.argName.type = n.argType.type;
+                n.argName.kind = ASTNode.Kinds.ScalarParm;
+                id = new ParmInfo(n.argName.idname,
+                                  n.argName.kind, n.argType.type);
+        	lookupid = (SymbolInfo) st.localLookup(n.argName.idname);
+        	if (lookupid != null) {
+               		 System.out.println(error(n) + lookupid.name()+
+                                     " is already declared.");
+                	typeErrors++;
+                	n.argName.type = ASTNode.Types.Error;
+
+        	} else { try {
+                		st.insert(id);
+			} catch (DuplicateException d) 
+                              { /* can't happen */ }
+			  catch (EmptySTException e) 
+                              { /* can't happen */ }
+        	}
+                n.argName.idinfo=id;
+                n.parm=id;
+
+	}
+	
+	void visit(arrayArgDeclNode n){
+		SymbolInfo     lookupid;
+        	ParmInfo       id;
+
+                n.argName.type = n.elementType.type;
+                n.argName.kind = ASTNode.Kinds.ArrayParm;
+                id = new ParmInfo(n.argName.idname,
+                                  n.argName.kind, n.elementType.type);
+        	lookupid = (SymbolInfo) st.localLookup(n.argName.idname);
+        	if (lookupid != null) {
+               		 System.out.println(error(n) + lookupid.name()+
+                                     " is already declared.");
+                	typeErrors++;
+                	n.argName.type = ASTNode.Types.Error;
+
+        	} else { try {
+                		st.insert(id);
+			} catch (DuplicateException d) 
+                              { /* can't happen */ }
+			  catch (EmptySTException e) 
+                              { /* can't happen */ }
+        	}
+            n.argName.idinfo=id;
+            n.parm=id;
+	}
+	
+	void visit(constDeclNode n){
+		SymbolInfo     id;
+
+		this.visit(n.constValue);
+
+        	id = (SymbolInfo) st.localLookup(n.constName.idname);
+        	if (id != null) {
+               		 System.out.println(error(n) + id.name()+
+                                     " is already declared.");
+                	typeErrors++;
+                	n.constName.type = ASTNode.Types.Error;
+
+        	} else {
+                	n.constName.type = n.constValue.type;
+			mustBeScalar(n.constValue,
+                       	    error(n) + "The constant must be a scalar. ");
+			if (! isScalar(n.constValue.kind))
+				n.constValue.type  = ASTNode.Types.Error;
+                	id = new SymbolInfo(n.constName.idname,
+                                      ASTNode.Kinds.Value,n.constName.type);
+			try {
+                		st.insert(id);
+			} catch (DuplicateException d) 
+                              { /* can't happen */ }
+			  catch (EmptySTException e) 
+                              { /* can't happen */ }
+                	n.constName.idinfo=id;
+                      }
+	 }
+	 
+	 void visit(arrayDeclNode n){
+		ArrayInfo     id;
+        	SymbolInfo    lookupid;
+
+        	if (n.arraySize.intval <= 0) {
+               		 System.out.println(error(n) + n.arrayName.idname+
+                                     " must have more than 0 elements.");
+                	typeErrors++;
+		}
+        	lookupid = (SymbolInfo) st.localLookup(n.arrayName.idname);
+        	if (lookupid != null) {
+               		 System.out.println(error(n) + lookupid.name()+
+                                     " is already declared.");
+                	typeErrors++;
+                	n.arrayName.type = ASTNode.Types.Error;
+
+        	} else {
+                	n.arrayName.type = n.elementType.type;
+                	n.arrayName.kind = ASTNode.Kinds.Array;
+                	id = new ArrayInfo(n.arrayName.idname,
+					   n.elementType.type,
+                                           n.arraySize.intval);
+			try {
+                		st.insert(id);
+			} catch (DuplicateException d) 
+                              { /* can't happen */ }
+			  catch (EmptySTException e) 
+                              { /* can't happen */ }
+                	n.arrayName.idinfo=id;
+        	}
+	 }
+	
+	void visit(charTypeNode n){
+	//      No type checking needed
+	}
+	void visit(voidTypeNode n){
+	//      No type checking needed
+	}
+
+	void visit(whileNode n){
+		SymbolInfo     id, lookupid;
+
+		this.visit(n.condition);
+        typeMustBe(n.condition.type, ASTNode.Types.Boolean,
+                	error(n) + "The control expression of a while loop" +
+                          	" must be a bool.");
+        mustBeScalar(n.condition,
+  			  error(n) + "The control expression of a" +
+  			  				" while loop must be a scalar.");
+		if (! n.label.isNull()) {
+                	String labelName = ((identNode) n.label).idname;
+                	id = new SymbolInfo(labelName,
+                                  ASTNode.Kinds.VisibleLabel,
+                                  ASTNode.Types.Void);
+        		lookupid = (SymbolInfo) st.localLookup(labelName);
+        		if (lookupid != null) {
+               			 System.out.println(error(n) + lookupid.name()+
+                                     " is already declared.");
+                		typeErrors++;
+        		} else { try {
+                		st.insert(id);
+			} catch (DuplicateException d) 
+                              { /* can't happen */ }
+			  catch (EmptySTException e) 
+                              { /* can't happen */ }
+        		}
+			this.visit(n.loopBody);
+			// Now the label becomes hidden
+			id.kind=ASTNode.Kinds.HiddenLabel;
+		}else	this.visit(n.loopBody);
+
+	  }
+
+	void visit(breakNode n){
+		SymbolInfo    id;
+        	id = (SymbolInfo) st.globalLookup(n.label.idname);
+        	if (id == null) {
+               	 	System.out.println(error(n) +  n.label.idname +
+                             " is not declared.");
+               		typeErrors++;
+                	n.label.type = ASTNode.Types.Error;
+        	} else {
+                	n.label.type = id.type; 
+                	n.label.kind = id.kind; 
+                	n.label.idinfo = id; // Save ptr to sym tab entry
+			if (id.kind == ASTNode.Kinds.HiddenLabel) {
+               	 		System.out.println(error(n) +
+                                 n.label.idname +
+                                  " doesn't label an enclosing while loop.");
+               			typeErrors++;
+			} else  if (id.kind != ASTNode.Kinds.VisibleLabel) {
+               	 		System.out.println(error(n) +
+                                 n.label.idname + " isn't a label.");
+               			typeErrors++;
+			}
+        	}
+	}
+	void visit(continueNode n){
+		SymbolInfo    id;
+        	id = (SymbolInfo) st.globalLookup(n.label.idname);
+        	if (id == null) {
+               	 	System.out.println(error(n) +  n.label.idname +
+                             " is not declared.");
+               		typeErrors++;
+                	n.label.type = ASTNode.Types.Error;
+        	} else {
+                	n.label.type = id.type; 
+                	n.label.kind = id.kind; 
+                	n.label.idinfo = id; // Save ptr to sym tab entry
+			if (id.kind == ASTNode.Kinds.HiddenLabel) {
+               	 		System.out.println(error(n) +
+                                 n.label.idname +
+                                  " doesn't label an enclosing while loop.");
+               			typeErrors++;
+			} else  if (id.kind != ASTNode.Kinds.VisibleLabel) {
+               	 		System.out.println(error(n) +
+                                 n.label.idname + " isn't a label.");
+               			typeErrors++;
+			}
+        	}
+	}
+	  
+	void visit(callNode n){
+		SymbolInfo    id;
+
+		this.visit(n.args);
+        id = (SymbolInfo) st.globalLookup(n.methodName.idname);
+        if (id == null) {
+        	System.out.println(error(n) +  n.methodName.idname +
+                             " is not declared.");
+            typeErrors++;
+            n.methodName.type = ASTNode.Types.Error;
+        } else {
+                n.methodName.type = id.type; 
+                n.methodName.kind = id.kind; 
+                n.methodName.idinfo = id; // Save ptr to sym tab entry
+                if (id.kind != ASTNode.Kinds.Method) {
+                	System.out.println(error(n) +
+                      n.methodName.idname + " isn't a method.");
+               		typeErrors++;
+                } else {
+                	if (id.type != ASTNode.Types.Void) {
+               	 		System.out.println(error(n) +
+                          n.methodName.idname +
+                          " is called as a procedure"+
+               	 		  " and must therefore return void.");
+               			typeErrors++;}
+                	// check args here
+                	MethodInfo m = (MethodInfo) id;
+                	if (!m.isOverloaded) {
+                		if (ParmInfo.length(m.parms) !=
+                			ParmInfo.length((ParmInfo)  n.args.parms)) {
+               	 			System.out.println(error(n) +
+               	 				n.methodName.idname + " requires " +
+               	 				ParmInfo.length(m.parms) + " parameters.");
+               	 			typeErrors++;}
+                		else if (ParmInfo.length(m.parms) > 0)
+                			compareParms((ParmInfo) n.args.parms,
+                						  n.methodName,1, m.parms);}
+                	else { //check all possible overloadings
+                			if (! parmsMatch((ParmInfo) n.args.parms, m.signatures)){
+                				System.out.println(error(n) +
+                						"None of the " + m.signatures.size() +
+                						" definitions of method " +
+                       	 				n.methodName.idname +
+                       	 				" match the parameters in this call.");
+                				typeErrors++;
+                			}
+                	}
+			   }
+        	}
+	}
+
+	  
+	  void visit(readNode n){
 		this.visit(n.targetVar);
-		try{
-			assertCondition(n.targetVar.type == ASTNode.Types.Integer || n.targetVar.type == ASTNode.Types.Character);
-		}catch(RuntimeException ex){
-			typeErrors++;
-			System.out.println(error(n) + "Only int and char values may be read");
-		}
+        	typeMustBe(n.targetVar.type,ASTNode.Types.Integer,
+                           ASTNode.Types.Character, error(n) + 
+                           "Only integers and characters may be read.");
+        	isScalarAssignable(n.targetVar,
+                	error(n) + n.targetVar.varName.idname +
+                           " may not be assigned to.");
 		this.visit(n.moreReads);
-	}
+	  }
+	  
 
-	void visit(returnNode n) {
-		if(n.returnVal.isNull()){
-			try{
-				assertCondition(currentMethod.returnType.type == ASTNode.Types.Void);
-			}catch(RuntimeException ex){
-				typeErrors++;
-				System.out.println(error(n) + "Return value can't be null and when method is not void");
-			}
-		}else{
-			try{
-				assertCondition(isScalar(((exprNode)n.returnVal).kind) && 
-						((exprNode)n.returnVal).type == currentMethod.returnType.type);
-			}catch(RuntimeException ex){
-				typeErrors++;
-				System.out.println(error(n) + "Incorrect return type.");
-			}
+	  void visit(returnNode n){
+		if (n.returnVal.isNull()) {
+			if (currentMethod.returnType.type != ASTNode.Types.Void) {
+               	 		System.out.println(error(n) +
+				"Return type of " + currentMethod.name.idname +
+				" is not void.");
+               			typeErrors++;}
+		} else {
+			 this.visit(n.returnVal);
+			 if (currentMethod.returnType.type !=
+                                         ((exprNode) n.returnVal).type){
+               	 		System.out.println(error(n) +
+				"Return type of " + currentMethod.name.idname +
+				" is "+ currentMethod.returnType.type);
+               			typeErrors++;
+                        }
+			 mustBeScalar((exprNode)n.returnVal,
+       			  error(n) + "The return value" +
+       			  				" must be a scalar.");
 		}
-	}
 
-	void visit(argsNode n) {
+	  }
+
+	  
+	  void visit(argsNode n){
+		ASTNode.Kinds argKind;
+
 		this.visit(n.argVal);
 		this.visit(n.moreArgs);
-	}
-
-	void visit(nullArgsNode n) {
-	}
-
-	void visit(castNode n) {
+		if (isScalar(n.argVal.kind))
+			argKind=ASTNode.Kinds.ScalarParm;
+		else	if (isArray(n.argVal.kind))
+				argKind=ASTNode.Kinds.ArrayParm;
+			else argKind= ASTNode.Kinds.Other;
+		n.parms = new ParmInfo("", argKind, n.argVal.type,
+				      ((ParmInfo) n.moreArgs.parms));
+	  }
+	  	
+	  void visit(nullArgsNode n){}
+		
+	  void visit(castNode n){
 		this.visit(n.operand);
-		
-		try{
-			assertCondition(n.operand.type == ASTNode.Types.Boolean || n.operand.type == ASTNode.Types.Character || 
-					n.operand.type == ASTNode.Types.Integer);
-		}catch(RuntimeException ex){
-			typeErrors++;
-			System.out.println(error(n) + "Can only cast int, bool, chars to other int, bool, and chars");
-		}
-		if(n.resultType.type == ASTNode.Types.Boolean){
-			n.type = ASTNode.Types.Boolean;
-		}else if(n.resultType.type == ASTNode.Types.Character){
-			n.type = ASTNode.Types.Character;
-		}else if(n.resultType.type == ASTNode.Types.Integer){
-			n.type = ASTNode.Types.Integer;
-		}
-		n.kind = n.operand.kind;
-	}
+        	n.type = n.resultType.type;
+        	n.kind = ASTNode.Kinds.Value;
+		if (! isScalar(n.operand.kind))
+			System.out.println(
+                	    error(n) + "Operand of cast must be an "
+                         	    +  " integer, character or boolean.");
+        		typeMustBe(n.resultType.type,
+				ASTNode.Types.Boolean,
+		           	ASTNode.Types.Character,
+				ASTNode.Types.Integer,
+                	    	error(n) + "Target type of cast must be "
+                         	    +  " integer, character or boolean.");
 
-	void visit(fctCallNode n) {
-		SymbolInfo id = (SymbolInfo) this.st.localLookup(n.methodName.idname);
-		
-		if(id == null){
-			typeErrors++;
-			System.out.println(error(n) + n.methodName.idname + "isn't declared");
-			return;
-		}else if(id.kind != ASTNode.Kinds.Method){
-			typeErrors++;
-			System.out.println(error(n) + n.methodName.idname + " isn't a method");
-			n.methodName.type = ASTNode.Types.Error;
-		}else{
-			n.type = id.type;
-			n.kind = ASTNode.Kinds.ScalarParm;
-			try{
-				assertCondition(id.type != ASTNode.Types.Void);
-			}catch(RuntimeException ex){
-				typeErrors++;
-				System.out.println(error(n) + n.methodName.idname + "must return void");
-			}
+	  }
 
-			this.visit(n.methodArgs);
+	  void visit(fctCallNode n){
+		SymbolInfo    id;
 
-			ArrayList<param> args = new ArrayList<param>();
-			argsNodeOption argsNodeOp = n.methodArgs;
+		this.visit(n.methodArgs);
+        	id = (SymbolInfo) st.globalLookup(n.methodName.idname);
+        	if (id == null) {
+               	 	System.out.println(error(n) +  n.methodName.idname +
+                             " is not declared.");
+               		typeErrors++;
+                	n.methodName.type = ASTNode.Types.Error;
+        	} else {
+                	n.methodName.type = id.type; 
+                	n.methodName.kind = id.kind; 
+                	n.methodName.idinfo = id; // Save ptr to sym tab entry
+                	n.type = n.methodName.type;
+                	n.kind = ASTNode.Kinds.Value;
+                	if (id.kind != ASTNode.Kinds.Method) {
+               	 		System.out.println(error(n) +
+                                 n.methodName.idname + " isn't a method.");
+               			typeErrors++;
+                	} else {
+                		if (id.type == ASTNode.Types.Void) {
+               	 			System.out.println(error(n) +
+                                n.methodName.idname +
+                                " is called as a function"+
+               	 				" and therefore can't return void.");
+               	 			typeErrors++;}
+                		// check args here
+                		MethodInfo m = (MethodInfo) id;
+                		if (!m.isOverloaded) {
+                			if (ParmInfo.length(m.parms) !=
+                					ParmInfo.length((ParmInfo) n.methodArgs.parms)) {
+                				System.out.println(error(n) +
+                						n.methodName.idname +
+                						" requires " +
+                						ParmInfo.length(m.parms) +
+                						" parameters.");
+                				typeErrors++;}
+                			else if (ParmInfo.length(m.parms) > 0)
+                				compareParms((ParmInfo) n.methodArgs.parms,
+                                     n.methodName,1, m.parms);}
+                		else { //check all possible overloadings
+                			if (! parmsMatch((ParmInfo) n.methodArgs.parms, m.signatures)){
+                				System.out.println(error(n) +
+                						"None of the " + m.signatures.size() +
+                						" definitions of method " +
+                						n.methodName.idname + 
+                						" match the parameters in this call.");
+                				typeErrors++;
+                			}
+                		}
+                	}
+        	}
+	  }
 
-			while(!argsNodeOp.isNull()){
-				param p = new param(((argsNode)argsNodeOp).argVal.type, ((argsNode)argsNodeOp).argVal.kind);
-				args.add(p);
-				argsNodeOp = ((argsNode)argsNodeOp).moreArgs;
-			}
-
-			try{
-				assertCondition(id.contains(args));
-			}catch(RuntimeException ex){
-				typeErrors++;
-				n.methodName.type = ASTNode.Types.Error;
-				if(id.methodParams.size() == 0){
-					System.out.println(error(n) + n.methodName.idname + " does not need any params");
-				}
-				else if(id.methodParams.size() == 1){
-					if(id.methodParams.get(0).size() != args.size()){
-						System.out.println(error(n) + "" +  n.methodName.idname 
-								+ " must have the following number of parameters: " + id.methodParams.get(0).size());
-
-					}
-					else{
-						for(int i = 0; i < id.methodParams.get(0).size(); i++){
-							if(i == args.size())break;
-							if(!args.get(i).CompareTo(id.methodParams.get(0).get(i))){
-								System.out.println(error(n) + " when calling " + n.methodName.idname + 
-										" the follow parameter has an incorrect type: " + n.methodName.idname);
-							}
-						}
-					}
-
-				}else{
-					System.out.println(error(n) + " when calling " + n.methodName.idname + 
-							" the follow definitions do not match the parameters. " + n.methodName.idname);
-				}
-			}
-
-		}
-		
-			
-	}
-
-	void visit(unaryOpNode n) {
+	  void visit(unaryOpNode n){
 		this.visit(n.operand);
-		try{
-			assertCondition(n.operand.type == ASTNode.Types.Boolean);
-		}catch(RuntimeException ex){
-			typeErrors++;
-			System.out.println(error(n) + "Operand must be boolean");
-		}
-		n.type = ASTNode.Types.Boolean;
+        	assertCondition(n.operatorCode == sym.NOT);
+        	n.type = ASTNode.Types.Boolean;
+        	n.kind = ASTNode.Kinds.Value;
+        	typeMustBe(n.operand.type, ASTNode.Types.Boolean,
+                	    error(n) + "Operand of "
+                                    + opToString(n.operatorCode) 
+                         	    +  " must be boolean.");
+        	mustBeScalar(n.operand,
+                    error(n) + "Operand of "
+                            + opToString(n.operatorCode) 
+                      	    +  " must be a scalar.");
+
+	  }
+
+	
+	void visit(charLitNode n){
+	//      All character literals are automatically type-correct
+	}
+	  
+	void visit(strLitNode n){
+	//      All string literals are automatically type-correct
 	}
 
-	void visit(charLitNode n) {
-		n.type = ASTNode.Types.Character;
-		n.kind = ASTNode.Kinds.Var;
+	
+	void visit(trueNode n){
+	//      All trueNodes are automatically type-correct
 	}
 
-	void visit(strLitNode n) {
-		n.kind = ASTNode.Kinds.String;
+	void visit(falseNode n){
+	//      All falseNodes are automatically type-correct
 	}
 
-	void visit(trueNode n) {
-		n.kind = ASTNode.Kinds.Value;
-		n.type = ASTNode.Types.Boolean;
-	}
-
-	void visit(falseNode n) {
-		n.kind = ASTNode.Kinds.Value;
-		n.type = ASTNode.Types.Boolean;
-	}
 
 }
