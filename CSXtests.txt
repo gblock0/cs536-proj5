@@ -535,20 +535,105 @@ test2:
 BUILD SUCCESSFUL
 Total time: 13 seconds
 
-
 ******************************** test-31.csx *****************************
+test2:
+     [java] *****Coded by Greg Bammel (906-337-7890) and Greg Block (905-814-9023)*****
+     [java] Begin CSX compilation of test-31.csx.
+     [java] CSX program parsed correctly.
+     [java] CSX compilation successfully completed.
+     [java] Translated program is in p31csx.j.
+     [echo] Run Jasmin on p31csx.j:
+     [java] Generated: p31csx.class
+     [move] Moving 1 file to /Users/gregoryblock/Dropbox/School/536/cs 536 project 5/bin
+     [echo] Begin execution of p31csx.class
+     [java] Testing Program p31csx
+     [java] Procedure 1 enteredX1 = (10?) 10
+     [java] Procedure 1 exited
+     [java] Procedure 2 entered Y1 = (15?) 15
+     [java] Procedure 2 exited X = (10?)10 Y = (15?) 15
+     [java] Test compeleted
+BUILD SUCCESSFUL
+Total time: 15 seconds
 
 ******************************** test-32.csx *****************************
+test2:
+     [java] *****Coded by Greg Bammel (906-337-7890) and Greg Block (905-814-9023)*****
+     [java] Begin CSX compilation of test-32.csx.
+     [java] CSX program parsed correctly.
+     [java] CSX compilation successfully completed.
+     [java] Translated program is in p32csx.j.
+     [echo] Run Jasmin on p32csx.j:
+     [java] Generated: p32csx.class
+     [move] Moving 1 file to /Users/gregoryblock/Dropbox/School/536/cs 536 project 5/bin
+     [echo] Begin execution of p32csx.class
+     [java] Testing Program p32csx
+     [java] Factorial of 1 is 1
+     [java] Factorial of 2 is 2
+     [java] Factorial of 3 is 6
+     [java] Factorial of 4 is 24
+     [java] Factorial of 5 is 120
+     [java] Factorial of 6 is 720
+     [java] Factorial of 7 is 5040
+     [java] Factorial of 8 is 40320
+     [java] Factorial of 9 is 362880
+     [java] Test compeleted
+BUILD SUCCESSFUL
+Total time: 22 seconds
 
 ******************************** test-33.csx *****************************
-
-******************************** test-34.csx *****************************
-
-******************************** test-35.csx *****************************
+test2:
+     [java] *****Coded by Greg Bammel (906-337-7890) and Greg Block (905-814-9023)*****
+     [java] Begin CSX compilation of test-33.csx.
+     [java] CSX program parsed correctly.
+     [java] CSX compilation successfully completed.
+     [java] Translated program is in p33csx.j.
+     [echo] Run Jasmin on p33csx.j:
+     [java] Generated: p33csx.class
+     [move] Moving 1 file to /Users/gregoryblock/Dropbox/School/536/cs 536 project 5/bin
+     [echo] Begin execution of p33csx.class
+     [java] Testing Program p33csx
+     [java]  Output X = -20 * Y = -10 = 200
+     [java]  Output: Are both X(-20) and Y(-10) less than zero??
+     [java]    Answer is : true
+     [java]  Output X = 8 / Y = 4 = 2
+     [java]  Output X = 2 / Y = 4 = 0
+     [java] Test compeleted
+BUILD SUCCESSFUL
+Total time: 36 seconds
 
 ******************************** test-36.csx *****************************
+test2:
+     [java] *****Coded by Greg Bammel (906-337-7890) and Greg Block (905-814-9023)*****
+     [java] Begin CSX compilation of test-36.csx.
+     [java] CSX program parsed correctly.
+     [java] CSX compilation successfully completed.
+     [java] Translated program is in p36csx.j.
+     [echo] Run Jasmin on p36csx.j:
+     [java] Generated: p36csx.class
+     [move] Moving 1 file to /Users/gregoryblock/Dropbox/School/536/cs 536 project 5/bin
+     [echo] Begin execution of p36csx.class
+     [java] Testing Program p36csx
+     [java] Fibonacci of 0 is 1
+     [java] Test compeleted
+BUILD SUCCESSFUL
+Total time: 14 seconds
 
 ******************************** test-37.csx *****************************
+test2:
+     [java] *****Coded by Greg Bammel (906-337-7890) and Greg Block (905-814-9023)*****
+     [java] Begin CSX compilation of test-37.csx.
+     [java] CSX program parsed correctly.
+     [java] CSX compilation successfully completed.
+     [java] Translated program is in p37csx.j.
+     [echo] Run Jasmin on p37csx.j:
+     [java] Generated: p37csx.class
+     [move] Moving 1 file to /Users/gregoryblock/Dropbox/School/536/cs 536 project 5/bin
+     [echo] Begin execution of p37csx.class
+     [java] Testing Program p37csx
+     [java] The grand sum is 45
+     [java] Test completed
+BUILD SUCCESSFUL
+Total time: 15 seconds
 
 ******************************** test-38.csx *****************************
 

@@ -17,7 +17,7 @@ public class CodeGenerating extends Visitor {
 
 	int numberOfLocals = 0; // Total number of local CSX-lite vars
 
-	int labelCnt = 1; // counter used to generate unique labels
+	int labelCnt = 0; // counter used to generate unique labels
 
 	methodDeclNode currentMethod;
 
@@ -1097,7 +1097,7 @@ public class CodeGenerating extends Visitor {
 			// Simple (unsubscripted) identifier
 			this.visit(n.target); // Evaluate ident onto stack
 			loadI(1);
-			gen("isub"); // incremented ident now on stack
+			gen("isub"); // decremented ident now on stack
 			computeAdr(n.target);
 			storeName(n.target);
 		} else { // Subscripted array element
@@ -1117,7 +1117,7 @@ public class CodeGenerating extends Visitor {
 				break;
 			}
 			loadI(1);
-			gen("isub"); // incremented identifier now on stack
+			gen("isub"); // decremented identifier now on stack
 			storeName(n.target);
 		}
 	}
