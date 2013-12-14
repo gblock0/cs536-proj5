@@ -601,7 +601,7 @@ test2:
 BUILD SUCCESSFUL
 Total time: 36 seconds
 
-******************************** test-36.csx *****************************
+******************************** test-36.csx (not sure if this is correct since only showing one Fibonacci number)*****************************>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 test2:
      [java] *****Coded by Greg Bammel (906-337-7890) and Greg Block (905-814-9023)*****
      [java] Begin CSX compilation of test-36.csx.
@@ -635,24 +635,159 @@ test2:
 BUILD SUCCESSFUL
 Total time: 15 seconds
 
-******************************** test-38.csx *****************************
+******************************** test-38.csx *****************************>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-******************************** test-39.csx *****************************
+******************************** test-39.csx *****************************>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 ******************************** test-40.csx *****************************
+test2:
+     [java] *****Coded by Greg Bammel (906-337-7890) and Greg Block (905-814-9023)*****
+     [java] Begin CSX compilation of test-40.csx.
+     [java] CSX program parsed correctly.
+     [java] CSX compilation successfully completed.
+     [java] Translated program is in p40csx.j.
+     [echo] Run Jasmin on p40csx.j:
+     [java] Generated: p40csx.class
+     [move] Moving 1 file to /Users/gregoryblock/Dropbox/School/536/cs 536 project 5/bin
+     [echo] Begin execution of p40csx.class
+     [java] Testing Program p40csx
+     [java] 1+2+3+4 = 10
+     [java] Test compeleted
+BUILD SUCCESSFUL
+Total time: 15 seconds
 
 ******************************** test-41.csx *****************************
+test2:
+     [java] *****Coded by Greg Bammel (906-337-7890) and Greg Block (905-814-9023)*****
+     [java] Begin CSX compilation of test-41.csx.
+     [java] CSX program parsed correctly.
+     [java] CSX compilation successfully completed.
+     [java] Translated program is in p41csx.j.
+     [echo] Run Jasmin on p41csx.j:
+     [java] Generated: p41csx.class
+     [move] Moving 1 file to /Users/gregoryblock/Dropbox/School/536/cs 536 project 5/bin
+     [echo] Begin execution of p41csx.class
+     [java] Testing Program p41csx
+     [java] 1+2+3+4+5+6+7 = 28
+     [java] Test compeleted
+BUILD SUCCESSFUL
+Total time: 13 seconds
 
 ******************************** test-42.csx *****************************
+test2:
+     [java] *****Coded by Greg Bammel (906-337-7890) and Greg Block (905-814-9023)*****
+     [java] Begin CSX compilation of test-42.csx.
+     [java] CSX program parsed correctly.
+     [java] CSX compilation successfully completed.
+     [java] Translated program is in p42csx.j.
+     [echo] Run Jasmin on p42csx.j:
+     [java] Generated: p42csx.class
+     [move] Moving 1 file to /Users/gregoryblock/Dropbox/School/536/cs 536 project 5/bin
+     [echo] Begin execution of p42csx.class
+     [java] Testing Program p42csx
+     [java] 100+1 = 101
+     [java] Test compeleted
+BUILD SUCCESSFUL
+Total time: 14 seconds
 
-******************************** test-43.csx *****************************
+******************************** test-43.csx *****************************>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 ******************************** test-44.csx *****************************
+test2:
+     [java] *****Coded by Greg Bammel (906-337-7890) and Greg Block (905-814-9023)*****
+     [java] Begin CSX compilation of test-44.csx.
+     [java] CSX program parsed correctly.
+     [java] CSX compilation successfully completed.
+     [java] Translated program is in p44csx.j.
+     [echo] Run Jasmin on p44csx.j:
+     [java] Generated: p44csx.class
+     [move] Moving 1 file to /Users/gregoryblock/Dropbox/School/536/cs 536 project 5/bin
+     [echo] Begin execution of p44csx.class
+     [java] This should print
+     [java] This should also print
+BUILD SUCCESSFUL
+Total time: 13 seconds
 
 ******************************** test-45.csx *****************************
+test2:
+     [java] *****Coded by Greg Bammel (906-337-7890) and Greg Block (905-814-9023)*****
+     [java] Begin CSX compilation of test-45.csx.
+     [java] CSX program parsed correctly.
+     [java] CSX compilation successfully completed.
+     [java] Translated program is in p45csx.j.
+     [echo] Run Jasmin on p45csx.j:
+     [java] Generated: p45csx.class
+     [move] Moving 1 file to /Users/gregoryblock/Dropbox/School/536/cs 536 project 5/bin
+     [echo] Begin execution of p45csx.class
+     [java] int value of myChar = 97
+BUILD SUCCESSFUL
+Total time: 13 seconds
 
 ******************************** test-46.csx *****************************
+test2:
+     [java] *****Coded by Greg Bammel (906-337-7890) and Greg Block (905-814-9023)*****
+     [java] Begin CSX compilation of test-46.csx.
+     [java] CSX program parsed correctly.
+     [java] CSX compilation successfully completed.
+     [java] Translated program is in p46csx.j.
+     [echo] Run Jasmin on p46csx.j:
+     [java] Generated: p46csx.class
+     [move] Moving 1 file to /Users/gregoryblock/Dropbox/School/536/cs 536 project 5/bin
+     [echo] Begin execution of p46csx.class
+     [java] myIntArray[0] = 0
+     [java] myIntArray[1] = 1
+     [java] myIntArray[2] = 2
+     [java] myIntArray[3] = 3
+     [java] myIntArray[4] = 4
+     [java] myIntArray[5] = 5
+     [java] myIntArray[6] = 6
+     [java] myIntArray[7] = 7
+     [java] myIntArray[8] = 8
+     [java] myIntArray[9] = 9
+     [java] myCharArray[0] = a
+     [java] myCharArray[1] = b
+     [java] myCharArray[2] = c
+     [java] myCharArray[3] = d
+     [java] myCharArray[4] = e
+     [java] This should only print once
+BUILD SUCCESSFUL
+Total time: 14 seconds
 
 ******************************** test-47.csx *****************************
+test2:
+     [java] *****Coded by Greg Bammel (906-337-7890) and Greg Block (905-814-9023)*****
+     [java] Begin CSX compilation of test-47.csx.
+     [java] CSX program parsed correctly.
+     [java] CSX compilation successfully completed.
+     [java] Translated program is in p47csx.j.
+     [echo] Run Jasmin on p47csx.j:
+     [java] Generated: p47csx.class
+     [move] Moving 1 file to /Users/gregoryblock/Dropbox/School/536/cs 536 project 5/bin
+     [echo] Begin execution of p47csx.class
+     [java] myIntArray2[0] = 0
+     [java] myIntArray2[1] = 1
+     [java] myIntArray2[2] = 2
+     [java] myIntArray2[3] = 3
+     [java] myIntArray2[4] = 4
+     [java] myIntArray2[5] = 5
+     [java] myIntArray2[6] = 6
+     [java] myIntArray2[7] = 7
+     [java] myIntArray2[8] = 8
+     [java] myIntArray2[9] = 9
+BUILD SUCCESSFUL
+Total time: 13 seconds
 
 ******************************** test-48.csx *****************************
+test2:
+     [java] *****Coded by Greg Bammel (906-337-7890) and Greg Block (905-814-9023)*****
+     [java] Begin CSX compilation of test-48.csx.
+     [java] CSX program parsed correctly.
+     [java] CSX compilation successfully completed.
+     [java] Translated program is in p48csx.j.
+     [echo] Run Jasmin on p48csx.j:
+     [java] Generated: p48csx.class
+     [move] Moving 1 file to /Users/gregoryblock/Dropbox/School/536/cs 536 project 5/bin
+     [echo] Begin execution of p48csx.class
+     [java] This is a string assignment
+BUILD SUCCESSFUL
+Total time: 14 seconds
