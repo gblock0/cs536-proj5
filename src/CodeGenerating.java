@@ -103,7 +103,7 @@ public class CodeGenerating extends Visitor {
 	}
 
 	void storeGlobalInt(String name) {
-		gen("putstatic", CLASS + "/" + name + "I");
+		gen("putstatic", CLASS + "/" + name + " I");
 	}
 
 	void storeLocalInt(int index) {

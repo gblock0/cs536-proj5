@@ -498,8 +498,43 @@ BUILD SUCCESSFUL
 Total time: 15 seconds
 
 ******************************** test-29.csx *****************************
+test2:
+     [java] *****Coded by Greg Bammel (906-337-7890) and Greg Block (905-814-9023)*****
+     [java] Begin CSX compilation of test-29.csx.
+     [java] CSX program parsed correctly.
+     [java] CSX compilation successfully completed.
+     [java] Translated program is in p29csx.j.
+     [echo] Run Jasmin on p29csx.j:
+     [java] Generated: p29csx.class
+     [move] Moving 1 file to /Users/gregoryblock/Dropbox/School/536/cs 536 project 5/bin
+     [echo] Begin execution of p29csx.class
+     [java] Testing Program p29csx
+     [java]  X = 100 Y = 200 Z = -1
+     [java] In procedure local1: Expecting 10 and 20
+     [java]    X = 10   Y = 20
+     [java]  X = 100 Y = 200 Z = -1
+     [java] Test compeleted
+BUILD SUCCESSFUL
+Total time: 14 seconds
+
 
 ******************************** test-30.csx *****************************
+test2:
+     [java] *****Coded by Greg Bammel (906-337-7890) and Greg Block (905-814-9023)*****
+     [java] Begin CSX compilation of test-30.csx.
+     [java] CSX program parsed correctly.
+     [java] CSX compilation successfully completed.
+     [java] Translated program is in p30csx.j.
+     [echo] Run Jasmin on p30csx.j:
+     [java] Generated: p30csx.class
+     [move] Moving 1 file to /Users/gregoryblock/Dropbox/School/536/cs 536 project 5/bin
+     [echo] Begin execution of p30csx.class
+     [java] Testing Program p30csx
+     [java] Factorial of 6 is 720
+     [java] Test compeleted
+BUILD SUCCESSFUL
+Total time: 13 seconds
+
 
 ******************************** test-31.csx *****************************
 
