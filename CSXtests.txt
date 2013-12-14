@@ -197,7 +197,20 @@ test2:
 BUILD SUCCESSFUL
 Total time: 14 seconds
 
-<<<<<<<<<<******************************** test-11.csx *****************************>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+******************************** test-11.csx *****************************
+[java] *****Coded by Greg Bammel (906-337-7890) and Greg Block (905-814-9023)*****
+     [java] Begin CSX compilation of test-11.csx.
+     [java] CSX program parsed correctly.
+     [java] CSX compilation successfully completed.
+     [java] Translated program is in p11csx.j.
+     [echo] Run Jasmin on p11csx.j:
+     [java] Generated: p11csx.class
+     [move] Moving 1 file to /Users/gregoryblock/Dropbox/School/536/cs 536 project 5/bin
+     [echo] Begin execution of p11csx.class
+     [java] Testing program p11csx
+     [java] Enter an integer:
+1
+     [java] The integer you entered was 1
 
 ******************************** test-12.csx *****************************
 test2:
@@ -280,7 +293,23 @@ BUILD SUCCESSFUL
 Total time: 16 seconds
 
 
-<<<<<<<<<<<<<<<<<<<<<******************************** test-18.csx *****************************>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+******************************** test-18.csx *****************************
+test2:
+     [java] *****Coded by Greg Bammel (906-337-7890) and Greg Block (905-814-9023)*****
+     [java] Begin CSX compilation of test-18.csx.
+     [java] CSX program parsed correctly.
+     [java] CSX compilation successfully completed.
+     [java] Translated program is in p18csx.j.
+     [echo] Run Jasmin on p18csx.j:
+     [java] Generated: p18csx.class
+     [move] Moving 1 file to /Users/gregoryblock/Dropbox/School/536/cs 536 project 5/bin
+     [echo] Begin execution of p18csx.class
+     [java] Testing Program p18csx
+-5
+-13
+20
+     [java] Testing print:  Ouput is 100030002000
+     [java] Test compeleted
 
 ******************************** test-19.csx *****************************
 test2:
