@@ -676,16 +676,16 @@ public class CodeGenerating extends Visitor {
 
 		// Call CSX library routine "printInt(int i)"
 		if (n.outputValue.type == ASTNode.Types.Integer) {
-			gen("invokestatic", " CSXLib/printInt(I)V");
+			gen("invokestatic", "CSXLib/printInt(I)V");
 		} else if (n.outputValue.type == ASTNode.Types.Character) {
-			gen("invokestatic", " CSXLib/printChar(C)V");
+			gen("invokestatic", "CSXLib/printChar(C)V");
 		} else if (n.outputValue.type == ASTNode.Types.Boolean) {
-			gen("invokestatic", " CSXLib/printBool(B)V");
+			gen("invokestatic", "CSXLib/printBool(B)V");
 		} else if (n.outputValue.kind == ASTNode.Kinds.String) {
-			gen("invokestatic", " CSXLib/printString(Ljava/lang/String;)V");
+			gen("invokestatic", "CSXLib/printString(Ljava/lang/String;)V");
 		} else if (n.outputValue.kind == ASTNode.Kinds.Array
 				|| n.outputValue.kind == ASTNode.Kinds.ArrayParm) {
-			gen("invokestatic", " CSXLib/printCharArray([C)V");
+			gen("invokestatic", "CSXLib/printCharArray([C)V");
 		}
 		this.visit(n.morePrints);
 	}
@@ -767,10 +767,10 @@ public class CodeGenerating extends Visitor {
 			// Now load the array element onto the stack
 			switch (n.type) {
 			case Integer:
-				gen("iqload");// Generate: iaload
+				gen("iaload");// Generate: iaload
 				break;
 			case Boolean:
-				gen("bqload");// Generate: baload
+				gen("baload");// Generate: baload
 				break;
 			case Character:
 				gen("caload");// Generate: caload
@@ -792,7 +792,7 @@ public class CodeGenerating extends Visitor {
 
 		this.visit(n.members.fields);
 
-		gen("invokestatic ", CLASS + "/main()V");
+		gen("invokestatic", CLASS + "/main()V");
 		gen("return");
 		gen(".limit", "stack", 2);
 		gen(".end", "method");
@@ -909,7 +909,7 @@ public class CodeGenerating extends Visitor {
 				// Give this variable an index equal to numberOfLocals
 				// and remember index in symbol table entry
 			n.constName.idinfo.varIndex = currentMethod.name.idinfo.numberOfLocals;
-			n.constName.idinfo.adr = AdrModes.none;
+			n.constName.idinfo.adr = AdrModes.local;
 			// Increment numberOfLocals used in this method
 			currentMethod.name.idinfo.numberOfLocals++;
 			// compute and store const value
@@ -1023,7 +1023,7 @@ public class CodeGenerating extends Visitor {
 		 this.visit(n.methodArgs);
          String typeCode = buildTypeCode(n.methodName.idname, n.methodArgs, typeCode(n.type));
 
-         gen("invokestatic", CLASS + "/" + typeCode);
+         genCall(CLASS + "/" + typeCode);
 	}
 
 	void visit(returnNode n) {
