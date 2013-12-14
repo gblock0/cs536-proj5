@@ -671,22 +671,25 @@ public class CodeGenerating extends Visitor {
 	}
 
 	void visit(printNode n) {
-		// compute value to be printed onto the stack
+		// Compute value to be printed onto stack
 		this.visit(n.outputValue);
-
-		// Call CSX library routine "printInt(int i)"
-		if (n.outputValue.type == ASTNode.Types.Integer) {
-			gen("invokestatic", "CSXLib/printInt(I)V");
-		} else if (n.outputValue.type == ASTNode.Types.Character) {
-			gen("invokestatic", "CSXLib/printChar(C)V");
-		} else if (n.outputValue.type == ASTNode.Types.Boolean) {
-			gen("invokestatic", "CSXLib/printBool(B)V");
-		} else if (n.outputValue.kind == ASTNode.Kinds.String) {
-			gen("invokestatic", "CSXLib/printString(Ljava/lang/String;)V");
-		} else if (n.outputValue.kind == ASTNode.Kinds.Array
-				|| n.outputValue.kind == ASTNode.Kinds.ArrayParm) {
-			gen("invokestatic", "CSXLib/printCharArray([C)V");
-		}
+		if (n.outputValue.kind == ASTNode.Kinds.Array
+				|| n.outputValue.kind == ASTNode.Kinds.ArrayParm)
+			genCall("CSXLib/printCharArray([C)V");
+		else if (n.outputValue.kind == ASTNode.Kinds.String)
+			genCall("CSXLib/printString(Ljava/lang/String;)V");
+		else
+			switch (n.outputValue.type) {
+			case Integer:
+				genCall("CSXLib/printInt(I)V");
+				break;
+			case Boolean:
+				genCall("CSXLib/printBool(Z)V");
+				break;
+			case Character:
+				genCall("CSXLib/printChar(C)V");
+				break;
+			}
 		this.visit(n.morePrints);
 	}
 

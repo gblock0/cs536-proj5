@@ -35,6 +35,7 @@ public class CSX {
 
     parser csxParser = new parser(); 
 
+    System.out.println("*****Coded by Greg Bammel (906-337-7890) and Greg Block (905-814-9023)*****");
     System.out.println ("\n\n" + "Begin CSX compilation of " +
 			fileName + ".\n");
     Symbol root=null;
@@ -63,7 +64,7 @@ public class CSX {
         
         // We'll place the name of the class we are generating in a file "build.properties"
         // This file can be accessed by build.xml to get the class name we're translating
-        PrintStream	propertiesFile; // File to which build propertiese will be generated
+        PrintStream	propertiesFile; // File to which build properties will be generated
         propertiesFile = new PrintStream(new FileOutputStream("build.properties"));
         propertiesFile.println("className="+className);
         propertiesFile.close();
