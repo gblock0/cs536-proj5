@@ -197,25 +197,123 @@ test2:
 BUILD SUCCESSFUL
 Total time: 14 seconds
 
-******************************** test-11.csx *****************************
+<<<<<<<<<<******************************** test-11.csx *****************************>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 ******************************** test-12.csx *****************************
+test2:
+     [java] *****Coded by Greg Bammel (906-337-7890) and Greg Block (905-814-9023)*****
+     [java] Begin CSX compilation of test-12.csx.
+     [java] CSX program parsed correctly.
+     [java] CSX compilation successfully completed.
+     [java] Translated program is in p12csx.j.
+     [echo] Run Jasmin on p12csx.j:
+     [java] Generated: p12csx.class
+     [move] Moving 1 file to /Users/gregoryblock/Dropbox/School/536/cs 536 project 5/bin
+     [echo] Begin execution of p12csx.class
+     [java] Testing program p12csx
+     [java] i = 100
+BUILD SUCCESSFUL
+Total time: 13 seconds
 
 ******************************** test-13.csx *****************************
+test2:
+     [java] *****Coded by Greg Bammel (906-337-7890) and Greg Block (905-814-9023)*****
+     [java] Begin CSX compilation of test-13.csx.
+     [java] CSX program parsed correctly.
+     [java] CSX compilation successfully completed.
+     [java] Translated program is in p13csx.j.
+     [echo] Run Jasmin on p13csx.j:
+     [java] Generated: p13csx.class
+     [move] Moving 1 file to /Users/gregoryblock/Dropbox/School/536/cs 536 project 5/bin
+     [echo] Begin execution of p13csx.class
+     [java] Testing program p13csx
+     [java] i = 1001
+BUILD SUCCESSFUL
+Total time: 15 seconds
 
 ******************************** test-14.csx *****************************
+test2:
+     [java] *****Coded by Greg Bammel (906-337-7890) and Greg Block (905-814-9023)*****
+     [java] Begin CSX compilation of test-14.csx.
+     [java] CSX program parsed correctly.
+     [java] CSX compilation successfully completed.
+     [java] Translated program is in p14csx.j.
+     [echo] Run Jasmin on p14csx.j:
+     [java] Generated: p14csx.class
+     [move] Moving 1 file to /Users/gregoryblock/Dropbox/School/536/cs 536 project 5/bin
+     [echo] Begin execution of p14csx.class
+     [java] Testing program p14csx
+BUILD SUCCESSFUL
+Total time: 14 seconds
+
 
 ******************************** test-15.csx *****************************
+test2:
+     [java] *****Coded by Greg Bammel (906-337-7890) and Greg Block (905-814-9023)*****
+     [java] Begin CSX compilation of test-15.csx.
+     [java] CSX program parsed correctly.
+     [java] CSX compilation successfully completed.
+     [java] Translated program is in p15csx.j.
+     [echo] Run Jasmin on p15csx.j:
+     [java] Generated: p15csx.class
+     [move] Moving 1 file to /Users/gregoryblock/Dropbox/School/536/cs 536 project 5/bin
+     [echo] Begin execution of p15csx.class
+     [java] Testing program p15csx
+     [java] The value of i is 100
+BUILD SUCCESSFUL
+Total time: 16 seconds
 
 ******************************** test-16.csx *****************************
+test2:
+     [java] *****Coded by Greg Bammel (906-337-7890) and Greg Block (905-814-9023)*****
+     [java] Begin CSX compilation of test-16.csx.
+     [java] CSX program parsed correctly.
+     [java] CSX compilation successfully completed.
+     [java] Translated program is in p16csx.j.
+     [echo] Run Jasmin on p16csx.j:
+     [java] Generated: p16csx.class
+     [move] Moving 1 file to /Users/gregoryblock/Dropbox/School/536/cs 536 project 5/bin
+     [echo] Begin execution of p16csx.class
+     [java] Testing program p16csx
+     [java] The value of sum is 10000
+BUILD SUCCESSFUL
+Total time: 16 seconds
 
-******************************** test-17.csx *****************************
 
-******************************** test-18.csx *****************************
+<<<<<<<<<<<<<<<<<<<<<******************************** test-18.csx *****************************>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 ******************************** test-19.csx *****************************
+test2:
+     [java] *****Coded by Greg Bammel (906-337-7890) and Greg Block (905-814-9023)*****
+     [java] Begin CSX compilation of test-19.csx.
+     [java] CSX program parsed correctly.
+     [java] CSX compilation successfully completed.
+     [java] Translated program is in p19csx.j.
+     [echo] Run Jasmin on p19csx.j:
+     [java] Generated: p19csx.class
+     [move] Moving 1 file to /Users/gregoryblock/Dropbox/School/536/cs 536 project 5/bin
+     [echo] Begin execution of p19csx.class
+     [java] Testing Program p19csx
+     [java] Test compeleted
+BUILD SUCCESSFUL
+Total time: 26 seconds
+
 
 ******************************** test-20.csx *****************************
+test2:
+     [java] *****Coded by Greg Bammel (906-337-7890) and Greg Block (905-814-9023)*****
+     [java] Begin CSX compilation of test-20.csx.
+     [java] CSX program parsed correctly.
+     [java] CSX compilation successfully completed.
+     [java] Translated program is in p20csx.j.
+     [echo] Run Jasmin on p20csx.j:
+     [java] Generated: p20csx.class
+     [move] Moving 1 file to /Users/gregoryblock/Dropbox/School/536/cs 536 project 5/bin
+     [echo] Begin execution of p20csx.class
+     [java] Testing Program p20csx
+     [java] Test compeleted
+BUILD SUCCESSFUL
+Total time: 14 seconds
 
 ******************************** test-21.csx *****************************
 
