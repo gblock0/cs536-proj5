@@ -14,6 +14,7 @@ public class CSX {
   public static void
   main(String args[]) throws java.io.IOException,  Exception {
 
+    System.out.println("*****Coded by Greg Bammel (906-337-7890) and Greg Block (905-814-9023)*****");
 	 String fileName;
 		fileName = ArgsProcessor.getArg(args);
 		
@@ -35,7 +36,6 @@ public class CSX {
 
     parser csxParser = new parser(); 
 
-    System.out.println("*****Coded by Greg Bammel (906-337-7890) and Greg Block (905-814-9023)*****");
     System.out.println ("\n\n" + "Begin CSX compilation of " +
 			fileName + ".\n");
     Symbol root=null;
